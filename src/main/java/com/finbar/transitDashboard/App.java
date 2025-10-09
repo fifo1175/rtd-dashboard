@@ -19,7 +19,9 @@ public class App {
 	public CommandLineRunner commandLineRunner(ApplicationContext context) {
 		return args -> {
 			System.out.println("STARTED");
+			FeedPoller poller = new FeedPoller();
 
+			poller.PollData();
 		};
 	}
 
