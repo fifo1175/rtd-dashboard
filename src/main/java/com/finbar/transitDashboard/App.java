@@ -27,8 +27,8 @@ public class App {
 		return args -> {
 			System.out.println("STARTED");
 			FeedPoller poller = new FeedPoller();
-
 			poller.PollData();
+
 
 		};
 	}

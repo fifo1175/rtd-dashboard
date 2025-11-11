@@ -1,16 +1,25 @@
 package com.finbar.transitDashboard;
 
-import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
-import com.google.transit.realtime.GtfsRealtime.FeedEntity;
-import com.google.transit.realtime.GtfsRealtime.VehiclePosition;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.protocol.Message;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.BytesSerializer;
+import org.apache.kafka.common.serialization.IntegerSerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
+import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+
+import java.util.*;
 
 import org.slf4j.LoggerFactory;
 
@@ -20,86 +29,70 @@ public class FeedPoller {
 
 	private int vehicleCount;
 
+	KafkaTemplate kafkaTemplate;
+
 	public FeedPoller() {
 
 	}
 
+	@Bean
+	private ProducerFactory<Integer, String> producerFactory() {
+		return new DefaultKafkaProducerFactory<>(producerConfigs());
+	}
+
+	@Bean
+	private Map<String, Object> producerConfigs() {
+		Map<String, Object> props = new HashMap<>();
+		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
+		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+		return props;
+	}
+
+	@Bean
+	private KafkaTemplate<Integer, String> kafkaTemplate() {
+		return new KafkaTemplate<Integer, String>(producerFactory());
+	}
+
 	// running every 30 seconds
-	// @Scheduled(fixedRate = 30000)
+	@Scheduled(fixedRate = 30000)
 	public void PollData() {
 
 		RestClient restClient = RestClient.create();
 
-		// TODO: parse data and send to kafka to topic as json rtd-bus-position topic
-		byte[] protobufData = restClient.get()
-				.uri("https://open-data.rtd-denver.com/files/gtfs-rt/rtd/VehiclePosition.pb")
-				.retrieve()
-				.body(byte[].class);
-
-		// TODO: add kafka listener to read from kafka bus-position and store into in
-		// memory
-		// TODO: to calculate speed, you need to store previous vehicle position into
-		// in-memoryDb like rocksDb
-		// TODO: then when new kafka data comes in, get previous position as byte array
-		// to string to calculate speed
-		// TODO: store non realtime data in SQL or redis and Write API to fetch to
-		// frontend (optional)
-		// TODO: write enriched data and metrics back to kafka and SQL-lite or redis
-		// TODO: read kafka enriched feed stream into UI with API
-		// can use
 		try {
-			System.out.println(protobufData[0]);
-			System.out.println(protobufData[1]);
-			System.out.println(protobufData[2]);
+			byte[] vehicleFeed = restClient.get()
+					.uri("https://open-data.rtd-denver.com/files/gtfs-rt/rtd/VehiclePosition.pb")
+					.retrieve()
+					.body(byte[].class);
 
-			FeedMessage feed = FeedMessage.parseFrom(protobufData);
+			byte[] alertsFeed = restClient.get()
+					.uri("https://open-data.rtd-denver.com/files/gtfs-rt/rtd/Alerts.pb")
+					.retrieve()
+					.body(byte[].class);
 
-			FeedEntity feedEntity = feed.getEntity(0);
-			VehiclePosition position = feedEntity.getVehicle();
-			System.out.println(position);
 
-			System.out.println("---------------------");
-			GtfsRealtime.Position actualPosition = position.getPosition();
+			byte[] tripUpdateFeed = restClient.get()
+					.uri("https://open-data.rtd-denver.com/files/gtfs-rt/rtd/TripUpdate.pb")
+					.retrieve()
+					.body(byte[].class);
 
-			Set<String> allVehicleIds = new HashSet<>();
 
-			for (FeedEntity entity : feed.getEntityList()) {
-				if (entity.hasVehicle()) {
-					VehiclePosition vehicle = entity.getVehicle();
-					if (vehicle.hasTrip()) {
-						String tripId = vehicle.getTrip().getTripId();
-						String routeId = vehicle.getTrip().getRouteId();
-						int directionId = vehicle.getTrip().getDirectionId();
-						String scheduleRelationship = vehicle.getTrip().getScheduleRelationship().toString();
-						LocalDateTime currentDateTime = LocalDateTime.now();
-						//System.out.println(currentDateTime + "Trip: " + tripId + ", Route: " + routeId);
+			Producer<Integer, byte[]> producer = new KafkaProducer<>(producerConfigs());
+			ProducerRecord<Integer, byte[]> vehicleFeedRecord = new ProducerRecord<>("vehicle-positions", 0, vehicleFeed);
+			ProducerRecord<Integer, byte[]> tripUpdateFeedRecord = new ProducerRecord<>("trip-updates", 1, tripUpdateFeed);
+			producer.send(vehicleFeedRecord);
+			producer.send(tripUpdateFeedRecord);
+			producer.flush();
+			producer.close();
 
-					}
-					if (vehicle.hasVehicle()) {
-						String id = vehicle.getVehicle().getId();
-                       	allVehicleIds.add(id);
-					}
-				}
 
-				if (entity.hasAlert()) {
-					GtfsRealtime.Alert alert = entity.getAlert();
-					System.out.println(alert);
-
-				}
-
-			}
-
-			System.out.println("Unique vehicle count " + allVehicleIds.size());
-
-			vehicleCount = allVehicleIds.size();
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 
+
 	}
 
-	public int getVehicleCount () {
-		return vehicleCount;
-	}
 }

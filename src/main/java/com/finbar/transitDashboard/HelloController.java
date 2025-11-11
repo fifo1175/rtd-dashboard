@@ -20,8 +20,4 @@ public class HelloController {
         return "Hello from RTD dashboard!";
     }
 
-    @GetMapping("/vehicles")
-    public int vehicles() {
-        return new FeedPoller().getVehicleCount();
-    }
 }
