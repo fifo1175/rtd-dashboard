@@ -1,16 +1,16 @@
 package com.finbar.transitDashboard;
 
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
+import jakarta.annotation.PreDestroy;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.protocol.Message;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.BytesSerializer;
 import org.apache.kafka.common.serialization.IntegerSerializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -25,34 +25,21 @@ import org.slf4j.LoggerFactory;
 
 @Service
 public class FeedPoller {
+
 	private static Logger log = LoggerFactory.getLogger(FeedPoller.class);
 
-	private int vehicleCount;
-
-	KafkaTemplate kafkaTemplate;
-
-	public FeedPoller() {
-
-	}
-
-	@Bean
-	private ProducerFactory<Integer, String> producerFactory() {
-		return new DefaultKafkaProducerFactory<>(producerConfigs());
-	}
+	public FeedPoller() {}
 
 	@Bean
 	private Map<String, Object> producerConfigs() {
 		Map<String, Object> props = new HashMap<>();
 		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
 		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
 		return props;
 	}
 
-	@Bean
-	private KafkaTemplate<Integer, String> kafkaTemplate() {
-		return new KafkaTemplate<Integer, String>(producerFactory());
-	}
+	@Autowired
+	private KafkaTemplate<Integer, byte[]> kafkaTemplate;
 
 	// running every 30 seconds
 	@Scheduled(fixedRate = 30000)
@@ -78,21 +65,16 @@ public class FeedPoller {
 					.body(byte[].class);
 
 
-			Producer<Integer, byte[]> producer = new KafkaProducer<>(producerConfigs());
-			ProducerRecord<Integer, byte[]> vehicleFeedRecord = new ProducerRecord<>("vehicle-positions", 0, vehicleFeed);
-			ProducerRecord<Integer, byte[]> tripUpdateFeedRecord = new ProducerRecord<>("trip-updates", 1, tripUpdateFeed);
-			producer.send(vehicleFeedRecord);
-			producer.send(tripUpdateFeedRecord);
-			producer.flush();
-			producer.close();
+			System.out.println("SENDING VEHICLE FEED");
+			kafkaTemplate.send("vehicle-positions", vehicleFeed);
+			System.out.println("SENDING TRIP UPDATE FEED");
+			kafkaTemplate.send("trip-updates", tripUpdateFeed);
 
 
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-
-
 	}
 
 }
