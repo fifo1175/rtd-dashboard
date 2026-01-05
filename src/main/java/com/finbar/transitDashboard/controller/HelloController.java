@@ -1,6 +1,5 @@
-package com.finbar.transitDashboard;
+package com.finbar.transitDashboard.controller;
 
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.finbar.transitDashboard.FeedPoller;
@@ -15,7 +14,7 @@ public class HelloController {
     }
 
 
-    @GetMapping("/")
+    @GetMapping("/hello")
     public String index() {
         return "Hello from RTD dashboard!";
     }

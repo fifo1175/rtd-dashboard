@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTD Proactive Operations Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #212121;
+            color: #e8e8e8;
+            line-height: 1.5;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .navbar {
+            width: 240px;
+            background: #1a1a1a;
+            border-right: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .navbar-brand {
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid #2a2a2a;
+            margin-bottom: 20px;
+        }
+
+        .navbar-brand h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e8e8e8;
+            letter-spacing: -0.01em;
+        }
+
+        .navbar-brand p {
+            font-size: 11px;
+            color: #6b6b6b;
+            margin-top: 4px;
+        }
+
+        .nav-section {
+            padding: 0 12px;
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #6b6b6b;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            padding: 0 8px 8px 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            color: #a8a8a8;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            margin-bottom: 2px;
+        }
+
+        .nav-item:hover {
+            background: #2a2a2a;
+            color: #e8e8e8;
+        }
+
+        .nav-item.active {
+            background: #2a2a2a;
+            color: #e8e8e8;
+            font-weight: 500;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .alerts-page-list {
+            display: grid;
+            gap: 12px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .alert-card {
+            background: #2a2a2a;
+            border: 1px solid #333333;
+            border-left: 4px solid #dc2626;
+            border-radius: 6px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .alert-card:hover {
+            background: #2d2d2d;
+            border-left-color: #ef4444;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-icon {
+            margin-right: 12px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1a1a1a;
+            padding: 20px 32px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f5f5f5;
+            margin-bottom: 4px;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            color: #8b8b8b;
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            background: #212121;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            padding: 24px 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            background: #2a2a2a;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid #333333;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #404040;
+            background: #2d2d2d;
+            transform: translateY(-1px);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: -0.025em;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #8b8b8b;
+            font-weight: 500;
+        }
+
+        .on-time { color: #10b981; }
+        .minor-delay { color: #f59e0b; }
+        .major-delay { color: #ef4444; }
+
+        .legend-color.on-time { background: #10b981; }
+        .legend-color.minor-delay { background: #f59e0b; }
+        .legend-color.major-delay { background: #ef4444; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: 20px;
+            padding: 24px 32px 32px 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+            height: calc(100vh - 220px);
+        }
+
+        .map-container {
+            background: #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #333333;
+            height: 100%;
+            min-height: 500px;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .panel {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #333333;
+        }
+
+        .panel h3 {
+            font-size: 13px;
+            margin-bottom: 16px;
+            color: #e8e8e8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .prediction-item {
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 3px solid #ef4444;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.6;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .prediction-item:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .prediction-item strong {
+            color: #fca5a5;
+            font-weight: 600;
+        }
+
+        .route-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #333333;
+            font-size: 13px;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .route-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 0 -20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+        }
+
+        .route-item:last-child {
+            border-bottom: none;
+        }
+
+        .route-item strong {
+            font-weight: 600;
+            color: #e8e8e8;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            padding: 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #b8b8b8;
+            font-weight: 500;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b6b6b;
+            font-size: 13px;
+        }
+
+        .alert-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .alert-button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .alert-button:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        .alert-button.no-alerts {
+            background: #374151;
+            color: #9ca3af;
+            cursor: default;
+        }
+
+        .alert-button.no-alerts:hover {
+            background: #374151;
+            transform: none;
+        }
+
+        .alert-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .alert-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #2a2a2a;
+            border: 1px solid #dc2626;
+            border-radius: 8px;
+            min-width: 400px;
+            max-width: 500px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            animation: dropdownSlide 0.2s ease;
+        }
+
+        .alert-panel.show {
+            display: block;
+        }
+
+        @keyframes dropdownSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .alert-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .alert-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .alert-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid #333333;
+            color: #fef2f2;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-item {
+            cursor: pointer;
+        }
+
+        .alert-item:hover {
+            background: rgba(220, 38, 38, 0.15);
+        }
+
+        .alert-item strong {
+            color: #fca5a5;
+            font-weight: 600;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            flex: 1;
+        }
+
+        .pulse-marker {
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.5);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .map-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #404040;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-button {
+            background: #374151;
+            color: #e8e8e8;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-button:hover {
+            background: #4b5563;
+        }
+
+        .toggle-button.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .toggle-button.active:hover {
+            background: #059669;
+        }
+
+        @media (max-width: 1280px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .map-container {
+                height: 600px;
+            }
+
+            .navbar {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .navbar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #2a2a2a;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                padding: 16px;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .alert-panel {
+                min-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Left Navbar -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <h2>RTD Operations</h2>
+        <p>Transit Control</p>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <div class="nav-item active" onclick="switchPage('dashboard')">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('livemap')">
+            <span class="nav-icon">🗺️</span>
+            <span>Live Map</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('analytics')">
+            <span class="nav-icon">📈</span>
+            <span>Analytics</span>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-title">Monitoring</div>
+        <div class="nav-item" onclick="switchPage('alerts')">
+            <span class="nav-icon">⚠️</span>
+            <span>Alerts</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('vehicles')">
+            <span class="nav-icon">🚌</span>
+            <span>Vehicles</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('routes')">
+            <span class="nav-icon">🛣️</span>
+            <span>Routes</span>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-section-title">System</div>
+        <div class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content Area -->
+<div class="main-wrapper">
+    <div class="header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>RTD Proactive Operations Dashboard</h1>
+                <p>Real-time delay monitoring & predictive analytics for transit operations</p>
+            </div>
+            <div class="alert-dropdown">
+                <button id="alertButton" class="alert-button no-alerts" onclick="toggleAlerts()">
+                    <span>No Alerts</span>
+                </button>
+                <div id="alertPanel" class="alert-panel"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <!-- Dashboard Page - Full Dashboard -->
+        <div id="dashboardPage" class="page active">
+            <div class="stats" id="stats" style="padding: 24px 32px;">
+                <div class="stat-card">
+                    <div class="stat-number on-time" id="onTime">--</div>
+                    <div class="stat-label">On Time (±3 min)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number minor-delay" id="minorDelay">--</div>
+                    <div class="stat-label">Minor Delay (3-10 min)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number major-delay" id="majorDelay">--</div>
+                    <div class="stat-label">Major Delay (10+ min)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total">--</div>
+                    <div class="stat-label">Total Active Vehicles</div>
+                </div>
+            </div>
+
+            <div class="main-content" style="padding: 0 32px 32px 32px;">
+                <div class="map-container">
+                    <div class="map-controls">
+                        <button id="toggleOnTimeButton" class="toggle-button active" onclick="toggleOnTimeBuses()">
+                            <span>✓</span>
+                            <span>Show On-Time Buses</span>
+                        </button>
+                    </div>
+                    <div id="map"></div>
+                </div>
+
+                <div class="sidebar">
+                    <div class="panel">
+                        <h3>Delay Predictions (Next 20 min)</h3>
+                        <div id="predictionList"></div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Problem Routes</h3>
+                        <div id="topRoutes"></div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Delay Hotspots (Last 7 Days)</h3>
+                        <div id="delayPatterns"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Map Page - Map Only -->
+        <div id="livemapPage" class="page">
+            <div id="livemapContainer" style="height: calc(100vh - 100px); padding: 20px;">
+                <div class="map-container" style="height: 100%;">
+                    <div class="map-controls">
+                        <button id="toggleOnTimeButton2" class="toggle-button active" onclick="toggleOnTimeBuses()">
+                            <span>✓</span>
+                            <span>Show On-Time Buses</span>
+                        </button>
+                    </div>
+                    <!-- Map will be moved here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Page - Stats + Panels -->
+        <div id="analyticsPage" class="page" style="padding: 24px;">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number on-time" id="analyticsOnTime">--</div>
+                    <div class="stat-label">On Time (±3 min)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number minor-delay" id="analyticsMinorDelay">--</div>
+                    <div class="stat-label">Minor Delay (3-10 min)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number major-delay" id="analyticsMajorDelay">--</div>
+                    <div class="stat-label">Major Delay (10+ min)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="analyticsTotal">--</div>
+                    <div class="stat-label">Total Active Vehicles</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin: 24px auto 0 auto; max-width: 1600px;">
+                <div class="panel">
+                    <h3>Delay Predictions (Next 20 min)</h3>
+                    <div id="analyticsPredictionList"></div>
+                </div>
+
+                <div class="panel">
+                    <h3>Problem Routes</h3>
+                    <div id="analyticsTopRoutes"></div>
+                </div>
+
+                <div class="panel">
+                    <h3>Delay Hotspots (Last 7 Days)</h3>
+                    <div id="analyticsDelayPatterns"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Page -->
+        <div id="alertsPage" class="page" style="padding: 24px;">
+            <h2 style="color: #e8e8e8; margin-bottom: 20px;">Active Alerts</h2>
+            <div id="alertsPageList" class="alerts-page-list"></div>
+        </div>
+
+        <!-- Vehicles Page -->
+        <div id="vehiclesPage" class="page" style="padding: 24px;">
+            <h2 style="color: #e8e8e8; margin-bottom: 20px;">Vehicle Statistics</h2>
+            <div id="vehicleStats" class="stats-grid"></div>
+        </div>
+
+        <!-- Routes Page -->
+        <div id="routesPage" class="page" style="padding: 24px;">
+            <h2 style="color: #e8e8e8; margin-bottom: 20px;">Route Statistics</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <!-- Early Routes Panel -->
+                <div class="panel">
+                    <h3>Early Routes</h3>
+                    <p style="color: #9ca3af; font-size: 11px; margin-bottom: 16px; line-height: 1.5;">
+                        Routes with average delays < -3 minutes (early) with at least 2 active vehicles
+                    </p>
+                    <div id="earlyRoutesPanel"></div>
+                </div>
+
+                <!-- Delayed Routes Summary -->
+                <div class="panel">
+                    <h3>Route Performance Summary</h3>
+                    <div id="routeSummary"></div>
+                </div>
+            </div>
+
+            <h3 style="color: #e8e8e8; margin-bottom: 16px; font-size: 16px; font-weight: 600;">Problem Routes</h3>
+            <div id="routeStats" class="stats-grid"></div>
+        </div>
+    </div> <!-- end content-wrapper -->
+</div> <!-- end main-wrapper -->
+
+<script>
+    // Initialize map (centered on Denver)
+    const map = L.map('map').setView([39.7392, -104.9903], 11);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors, © CARTO',
+        maxZoom: 19
+    }).addTo(map);
+
+    let markers = {};
+    let vehicleData = {}; // Store vehicle data for route lookups
+    let showOnTimeBuses = true; // Toggle state for showing on-time buses
+
+    function switchPage(pageName) {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        // Show selected page
+        document.getElementById(pageName + 'Page').classList.add('active');
+
+        // Update nav items
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        event.target.closest('.nav-item').classList.add('active');
+
+        // Handle map movement between dashboard and livemap
+        const mapDiv = document.getElementById('map');
+        if (pageName === 'dashboard') {
+            // Move map back to dashboard if it's not already there
+            const dashboardMapContainer = document.querySelector('#dashboardPage .map-container');
+            if (!dashboardMapContainer.contains(mapDiv)) {
+                dashboardMapContainer.appendChild(mapDiv);
+            }
+            setTimeout(() => map.invalidateSize(), 100);
+        } else if (pageName === 'livemap') {
+            // Move map to livemap page
+            const livemapMapContainer = document.querySelector('#livemapPage .map-container');
+            if (!livemapMapContainer.contains(mapDiv)) {
+                livemapMapContainer.appendChild(mapDiv);
+            }
+            setTimeout(() => map.invalidateSize(), 100);
+        }
+
+        // Load page-specific data
+        if (pageName === 'alerts') {
+            updateAlertsPage();
+        } else if (pageName === 'vehicles') {
+            updateVehiclesPage();
+        } else if (pageName === 'routes') {
+            updateRoutesPage();
+        } else if (pageName === 'analytics') {
+            updateAnalyticsPage();
+        }
+    }
+
+    function updateAlertsPage() {
+        fetch('http://localhost:8080/api/alerts/active')
+            .then(r => r.json())
+            .then(alerts => {
+                const container = document.getElementById('alertsPageList');
+                if (alerts.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No active alerts</div>';
+                    return;
+                }
+                const html = alerts.map(a => `
+                    <div class="alert-card" onclick="switchPage('dashboard'); setTimeout(() => zoomToRoute('${a.route_id}'), 100)">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: #fca5a5; font-size: 15px;">${a.message}</strong>
+                                <p style="color: #9ca3af; margin-top: 8px; font-size: 13px;">→ ${a.action}</p>
+                            </div>
+                            <span style="color: #ef4444; font-size: 24px; font-weight: bold;">${a.delay_minutes} min</span>
+                        </div>
+                    </div>
+                `).join('');
+                container.innerHTML = html;
+            })
+            .catch(err => console.error('Error fetching alerts:', err));
+    }
+
+    function updateVehiclesPage() {
+        fetch('http://localhost:8080/api/delays/summary')
+            .then(r => r.json())
+            .then(stats => {
+                const html = `
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.total_vehicles}</div>
+                        <div class="stat-label">Total Active Vehicles</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number on-time">${stats.on_time}</div>
+                        <div class="stat-label">On Time (±3 min)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number minor-delay">${stats.minor_delay}</div>
+                        <div class="stat-label">Minor Delay (3-10 min)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number major-delay">${stats.major_delay}</div>
+                        <div class="stat-label">Major Delay (10+ min)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" style="color: #6b7280;">${stats.early}</div>
+                        <div class="stat-label">Early Vehicles</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number on-time">${stats.on_time_percentage}%</div>
+                        <div class="stat-label">On-Time Performance</div>
+                    </div>
+                `;
+                document.getElementById('vehicleStats').innerHTML = html;
+            })
+            .catch(err => console.error('Error fetching vehicle stats:', err));
+    }
+
+    function updateRoutesPage() {
+        // Fetch delayed routes
+        fetch('http://localhost:8080/api/delays/top-routes')
+            .then(r => r.json())
+            .then(routes => {
+                // Fetch current vehicles to find early routes
+                return fetch('http://localhost:8080/api/vehicles/current')
+                    .then(v => v.json())
+                    .then(vehicles => {
+                        // Group vehicles by route and calculate average delay
+                        const routeStats = {};
+                        vehicles.forEach(v => {
+                            if (!routeStats[v.route_id]) {
+                                routeStats[v.route_id] = { delays: [], count: 0 };
+                            }
+                            if (v.delay_seconds != null) {
+                                routeStats[v.route_id].delays.push(v.delay_seconds);
+                                routeStats[v.route_id].count++;
+                            }
+                        });
+
+                        // Find consistently early routes (avg < -3 min with at least 2 vehicles)
+                        const earlyRoutes = Object.entries(routeStats)
+                            .map(([routeId, stats]) => ({
+                                route_id: routeId,
+                                avg_delay: stats.delays.reduce((a, b) => a + b, 0) / stats.delays.length,
+                                count: stats.count
+                            }))
+                            .filter(r => r.avg_delay < -180 && r.count >= 2)
+                            .sort((a, b) => a.avg_delay - b.avg_delay);
+
+                        // Show early routes alert if any exist
+                        const alertContainer = document.getElementById('earlyRoutesAlert');
+                        if (earlyRoutes.length > 0) {
+                            const earlyRoutesList = earlyRoutes.map(r =>
+                                `<strong style="color: #60a5fa; font-size: 16px;">Route ${r.route_id}</strong> (${Math.abs(Math.round(r.avg_delay / 60))} min early)`
+                            ).join(', ');
+
+                            alertContainer.innerHTML = `
+                                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                        <span style="font-size: 24px;">💡</span>
+                                        <h3 style="font-size: 16px; font-weight: 600; color: #e8e8e8; margin: 0;">Resource Allocation Opportunity</h3>
+                                    </div>
+                                    <p style="color: #d1d5db; font-size: 14px; margin-bottom: 8px;">
+                                        The following routes are consistently running early: ${earlyRoutesList}
+                                    </p>
+                                    <p style="color: #93c5fd; font-size: 13px; font-style: italic;">
+                                        → Consider reallocating resources from these routes to routes experiencing delays
+                                    </p>
+                                </div>
+                            `;
+                        } else {
+                            alertContainer.innerHTML = '';
+                        }
+
+                        // Display delayed routes
+                        if (routes.length === 0) {
+                            document.getElementById('routeStats').innerHTML = '<div class="empty-state">No route data available</div>';
+                            return;
+                        }
+
+                        const html = routes.slice(0, 12).map(r => `
+                            <div class="stat-card" onclick="switchPage('dashboard'); setTimeout(() => zoomToRoute('${r.route_id}'), 100)" style="cursor: pointer;">
+                                <div style="font-size: 48px; font-weight: 700; color: #e8e8e8; margin-bottom: 12px; letter-spacing: -0.02em;">
+                                    Route ${r.route_id}
+                                </div>
+                                <div class="stat-number major-delay" style="font-size: 28px;">${r.avg_delay_minutes} min</div>
+                                <div class="stat-label">Average Delay</div>
+                                <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${r.incident_count} delays recorded</p>
+                            </div>
+                        `).join('');
+                        document.getElementById('routeStats').innerHTML = html;
+                    });
+            })
+            .catch(err => console.error('Error fetching route stats:', err));
+    }
+
+    function updateAnalyticsPage() {
+        // Update stats
+        fetch('http://localhost:8080/api/delays/summary')
+            .then(r => r.json())
+            .then(stats => {
+                document.getElementById('analyticsOnTime').textContent = stats.on_time;
+                document.getElementById('analyticsMinorDelay').textContent = stats.minor_delay;
+                document.getElementById('analyticsMajorDelay').textContent = stats.major_delay;
+                document.getElementById('analyticsTotal').textContent = stats.total_vehicles;
+            })
+            .catch(err => console.error('Error fetching analytics stats:', err));
+
+        // Update predictions
+        fetch('http://localhost:8080/api/predictions')
+            .then(r => r.json())
+            .then(predictions => {
+                const html = predictions.slice(0, 5).map(p => `
+                    <div class="prediction-item" onclick="switchPage('dashboard'); setTimeout(() => zoomToVehicle('${p.vehicle_id}'), 100)">
+                        <strong>Route ${p.route_id}</strong>: Currently ${p.current_delay_min} min delayed,
+                        predicted ${p.predicted_delay_min} min in 20 min (${p.confidence} confidence)
+                        <br><em>→ ${p.action}</em>
+                    </div>
+                `).join('');
+                document.getElementById('analyticsPredictionList').innerHTML =
+                    html || '<div class="empty-state">No significant delays predicted</div>';
+            })
+            .catch(err => console.error('Error fetching analytics predictions:', err));
+
+        // Update top routes
+        fetch('http://localhost:8080/api/delays/top-routes')
+            .then(r => r.json())
+            .then(routes => {
+                const html = routes.slice(0, 5).map(r => `
+                    <div class="route-item" onclick="switchPage('dashboard'); setTimeout(() => zoomToRoute('${r.route_id}'), 100)">
+                        <span><strong>Route ${r.route_id}</strong></span>
+                        <span class="major-delay">${r.avg_delay_minutes} min avg</span>
+                    </div>
+                `).join('');
+                document.getElementById('analyticsTopRoutes').innerHTML =
+                    html || '<div class="empty-state">No problem routes detected</div>';
+            })
+            .catch(err => console.error('Error fetching analytics routes:', err));
+
+        // Update delay patterns
+        fetch('http://localhost:8080/api/delays/patterns')
+            .then(r => r.json())
+            .then(patterns => {
+                const html = patterns.slice(0, 8).map(p => `
+                    <div class="route-item" onclick="switchPage('dashboard'); setTimeout(() => zoomToRoute('${p.route_id}'), 100)">
+                        <span><strong>Route ${p.route_id}</strong> at ${p.hour}:00</span>
+                        <span class="major-delay">${p.avg_delay_minutes} min avg (${p.frequency}x)</span>
+                    </div>
+                `).join('');
+                document.getElementById('analyticsDelayPatterns').innerHTML =
+                    html || '<div class="empty-state">No delay patterns detected</div>';
+            })
+            .catch(err => console.error('Error fetching analytics patterns:', err));
+    }
+
+    function toggleOnTimeBuses() {
+        showOnTimeBuses = !showOnTimeBuses;
+        const button1 = document.getElementById('toggleOnTimeButton');
+        const button2 = document.getElementById('toggleOnTimeButton2');
+
+        const updateButton = (btn) => {
+            if (!btn) return;
+            if (showOnTimeBuses) {
+                btn.classList.add('active');
+                btn.innerHTML = '<span>✓</span><span>Show On-Time Buses</span>';
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '<span>✗</span><span>Hide On-Time Buses</span>';
+            }
+        };
+
+        updateButton(button1);
+        updateButton(button2);
+
+        // Re-render markers with new filter
+        updateVehicles();
+    }
+
+    function getColor(delaySeconds) {
+        if (delaySeconds == null) return '#6b7280';
+        if (delaySeconds < -180) return '#6b7280'; // Early
+        if (delaySeconds <= 180) return '#10b981'; // On time
+        if (delaySeconds <= 600) return '#f59e0b'; // Minor delay
+        return '#ef4444'; // Major delay
+    }
+
+    function zoomToVehicle(vehicleId) {
+        // Find specific vehicle
+        const vehicle = vehicleData[vehicleId];
+
+        if (!vehicle ||
+            vehicle.latitude == null || vehicle.longitude == null ||
+            vehicle.latitude === 0 || vehicle.longitude === 0 ||
+            Math.abs(vehicle.latitude) > 90 || Math.abs(vehicle.longitude) > 180) {
+            console.log('Vehicle not found or has invalid coordinates: ' + vehicleId);
+            return;
+        }
+
+        // Zoom to the specific vehicle
+        map.setView([vehicle.latitude, vehicle.longitude], 13, { animate: true });
+
+        // Open popup and pulse effect
+        setTimeout(() => {
+            if (markers[vehicle.vehicle_id]) {
+                markers[vehicle.vehicle_id].openPopup();
+                markers[vehicle.vehicle_id].getElement()?.classList.add('pulse-marker');
+                setTimeout(() => {
+                    markers[vehicle.vehicle_id].getElement()?.classList.remove('pulse-marker');
+                }, 1000);
+            }
+        }, 500);
+    }
+
+    function zoomToRoute(routeId) {
+        // Find all vehicles for this route with valid coordinates
+        const routeVehicles = Object.values(vehicleData).filter(v =>
+            v.route_id === routeId &&
+            v.latitude != null && v.longitude != null &&
+            v.latitude !== 0 && v.longitude !== 0 &&
+            Math.abs(v.latitude) <= 90 && Math.abs(v.longitude) <= 180
+        );
+
+        if (routeVehicles.length === 0) {
+            console.log('No vehicles with valid coordinates found for route ' + routeId);
+            return;
+        }
+
+        if (routeVehicles.length === 1) {
+            // Single vehicle - center on it with moderate zoom
+            const vehicle = routeVehicles[0];
+            map.setView([vehicle.latitude, vehicle.longitude], 13, { animate: true });
+
+            // Open the popup for this vehicle after zoom
+            setTimeout(() => {
+                if (markers[vehicle.vehicle_id]) {
+                    markers[vehicle.vehicle_id].openPopup();
+                }
+            }, 500);
+        } else {
+            // Multiple vehicles - fit bounds to show all
+            const bounds = L.latLngBounds(
+                routeVehicles.map(v => [v.latitude, v.longitude])
+            );
+            map.fitBounds(bounds, { padding: [50, 50], animate: true });
+
+            // Open popup for the most delayed vehicle after zoom
+            const mostDelayed = routeVehicles.reduce((max, v) =>
+                (v.delay_seconds || 0) > (max.delay_seconds || 0) ? v : max
+            , routeVehicles[0]);
+
+            setTimeout(() => {
+                if (markers[mostDelayed.vehicle_id]) {
+                    markers[mostDelayed.vehicle_id].openPopup();
+                }
+            }, 500);
+        }
+
+        // Pulse effect on the route's markers
+        routeVehicles.forEach(v => {
+            if (markers[v.vehicle_id]) {
+                const marker = markers[v.vehicle_id];
+
+                // Create pulsing effect by temporarily enlarging the marker
+                setTimeout(() => {
+                    marker.getElement()?.classList.add('pulse-marker');
+                    setTimeout(() => {
+                        marker.getElement()?.classList.remove('pulse-marker');
+                    }, 1000);
+                }, 100);
+            }
+        });
+    }
+
+    function updateVehicles() {
+        fetch('http://localhost:8080/api/vehicles/current')
+            .then(r => r.json())
+            .then(vehicles => {
+                // Filter out vehicles with invalid coordinates
+                let validVehicles = vehicles.filter(v =>
+                    v.latitude != null && v.longitude != null &&
+                    v.latitude !== 0 && v.longitude !== 0 &&
+                    Math.abs(v.latitude) <= 90 && Math.abs(v.longitude) <= 180
+                );
+
+                // Filter out on-time buses if toggle is off
+                if (!showOnTimeBuses) {
+                    validVehicles = validVehicles.filter(v =>
+                        v.delay_seconds == null ||
+                        v.delay_seconds < -180 ||  // Early
+                        v.delay_seconds > 180      // Delayed
+                    );
+                }
+
+                // Store vehicle data for route lookups (keep all valid vehicles)
+                vehicleData = {};
+                vehicles.filter(v =>
+                    v.latitude != null && v.longitude != null &&
+                    v.latitude !== 0 && v.longitude !== 0 &&
+                    Math.abs(v.latitude) <= 90 && Math.abs(v.longitude) <= 180
+                ).forEach(v => {
+                    vehicleData[v.vehicle_id] = v;
+                });
+
+                // Remove old markers that shouldn't be shown
+                Object.keys(markers).forEach(vehicleId => {
+                    const shouldShow = validVehicles.some(v => v.vehicle_id === vehicleId);
+                    if (!shouldShow) {
+                        map.removeLayer(markers[vehicleId]);
+                        delete markers[vehicleId];
+                    }
+                });
+
+                // Update or create markers
+                validVehicles.forEach(v => {
+                    const color = getColor(v.delay_seconds);
+                    const size = v.delay_seconds > 600 ? 14 : 10;
+
+                    const icon = L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="
+                            background-color: ${color};
+                            width: ${size}px;
+                            height: ${size}px;
+                            border-radius: 50%;
+                            border: 2px solid white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                        "></div>`,
+                        iconSize: [size, size]
+                    });
+
+                    if (markers[v.vehicle_id]) {
+                        markers[v.vehicle_id].setLatLng([v.latitude, v.longitude]);
+                        markers[v.vehicle_id].setIcon(icon);
+                    } else {
+                        const marker = L.marker([v.latitude, v.longitude], {icon: icon}).addTo(map);
+                        marker.bindPopup(`
+                            <strong>Route ${v.route_id}</strong><br>
+                            Delay: ${v.delay_minutes ? v.delay_minutes.toFixed(1) : 0} min<br>
+                            Status: ${v.delay_category.replace('_', ' ')}
+                        `);
+                        markers[v.vehicle_id] = marker;
+                    }
+                });
+            })
+            .catch(err => console.error('Error fetching vehicles:', err));
+    }
+
+    function updateStats() {
+        fetch('http://localhost:8080/api/delays/summary')
+            .then(r => r.json())
+            .then(stats => {
+                document.getElementById('onTime').textContent = stats.on_time;
+                document.getElementById('minorDelay').textContent = stats.minor_delay;
+                document.getElementById('majorDelay').textContent = stats.major_delay;
+                document.getElementById('total').textContent = stats.total_vehicles;
+            })
+            .catch(err => console.error('Error fetching stats:', err));
+    }
+
+    function updatePredictions() {
+        fetch('http://localhost:8080/api/predictions')
+            .then(r => r.json())
+            .then(predictions => {
+                const html = predictions.slice(0, 5).map(p => `
+                    <div class="prediction-item" onclick="zoomToVehicle('${p.vehicle_id}')">
+                        <strong>Route ${p.route_id}</strong>: Currently ${p.current_delay_min} min delayed,
+                        predicted ${p.predicted_delay_min} min in 20 min (${p.confidence} confidence)
+                        <br><em>→ ${p.action}</em>
+                    </div>
+                `).join('');
+                document.getElementById('predictionList').innerHTML =
+                    html || '<div class="empty-state">No significant delays predicted</div>';
+            })
+            .catch(err => console.error('Error fetching predictions:', err));
+    }
+
+    function updateTopRoutes() {
+        fetch('http://localhost:8080/api/delays/top-routes')
+            .then(r => r.json())
+            .then(routes => {
+                const html = routes.slice(0, 5).map(r => `
+                    <div class="route-item" onclick="zoomToRoute('${r.route_id}')">
+                        <span><strong>Route ${r.route_id}</strong></span>
+                        <span class="major-delay">${r.avg_delay_minutes} min avg</span>
+                    </div>
+                `).join('');
+                document.getElementById('topRoutes').innerHTML =
+                    html || '<div class="empty-state">No problem routes detected</div>';
+            })
+            .catch(err => console.error('Error fetching routes:', err));
+    }
+
+    function toggleAlerts() {
+        const panel = document.getElementById('alertPanel');
+        panel.classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.querySelector('.alert-dropdown');
+        const panel = document.getElementById('alertPanel');
+        if (dropdown && !dropdown.contains(event.target)) {
+            panel.classList.remove('show');
+        }
+    });
+
+    function updateAlerts() {
+        fetch('http://localhost:8080/api/alerts/active')
+            .then(r => r.json())
+            .then(alerts => {
+                const button = document.getElementById('alertButton');
+                const panel = document.getElementById('alertPanel');
+
+                if (alerts.length > 0) {
+                    // Update button
+                    button.className = 'alert-button';
+                    button.innerHTML = `
+                        <span>⚠ ${alerts.length} Alert${alerts.length > 1 ? 's' : ''}</span>
+                        <span class="alert-count">${alerts.length}</span>
+                    `;
+
+                    // Update panel
+                    const html = alerts.map(a => `
+                        <div class="alert-item" onclick="zoomToRoute('${a.route_id}')">
+                            <strong>${a.message}</strong><br>
+                            <span style="color: #d1d5db;">→ ${a.action}</span>
+                        </div>
+                    `).join('');
+                    panel.innerHTML = html;
+                } else {
+                    button.className = 'alert-button no-alerts';
+                    button.innerHTML = '<span>No Alerts</span>';
+                    panel.innerHTML = '<div class="alert-item" style="color: #9ca3af; text-align: center;">All systems running smoothly</div>';
+                }
+            })
+            .catch(err => console.error('Error fetching alerts:', err));
+    }
+
+    function updatePatterns() {
+        fetch('http://localhost:8080/api/delays/patterns')
+            .then(r => r.json())
+            .then(patterns => {
+                const html = patterns.slice(0, 8).map(p => `
+                    <div class="route-item" onclick="zoomToRoute('${p.route_id}')">
+                        <span><strong>Route ${p.route_id}</strong> at ${p.hour}:00</span>
+                        <span class="major-delay">${p.avg_delay_minutes} min avg (${p.frequency}x)</span>
+                    </div>
+                `).join('');
+                document.getElementById('delayPatterns').innerHTML =
+                    html || '<div class="empty-state">No delay patterns detected</div>';
+            })
+            .catch(err => console.error('Error fetching patterns:', err));
+    }
+
+    // Initial load
+    updateVehicles();
+    updateStats();
+    updatePredictions();
+    updateTopRoutes();
+    updateAlerts();
+    updatePatterns();
+
+    // Update every 30 seconds
+    setInterval(() => {
+        updateVehicles();
+        updateStats();
+        updatePredictions();
+        updateTopRoutes();
+        updateAlerts();
+    }, 30000);
+
+    // Update patterns every 60 seconds (less frequent as they change slowly)
+    setInterval(updatePatterns, 60000);
+
+    console.log('RTD Dashboard loaded. Updates every 30 seconds.');
+</script>
+</body>
+</html>

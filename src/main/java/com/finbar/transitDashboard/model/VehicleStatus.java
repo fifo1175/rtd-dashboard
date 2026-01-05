@@ -120,30 +120,5 @@ public class VehicleStatus {
         this.vehicleId = vehicleId;
     }
 
-    public static class DelayHistoryId implements Serializable {
-        private String tripId;
-        private Long timestamp;
-
-        public DelayHistoryId() {}
-
-        public DelayHistoryId(String tripId, Long timestamp) {
-            this.tripId = tripId;
-            this.timestamp = timestamp;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            DelayHistory.DelayHistoryId that = (DelayHistory.DelayHistoryId) o;
-            return Objects.equals(tripId, that.tripId) &&
-                    Objects.equals(timestamp, that.timestamp);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(tripId, timestamp);
-        }
-    }
 
 }

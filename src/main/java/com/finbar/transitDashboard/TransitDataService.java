@@ -101,6 +101,7 @@ public class TransitDataService {
                 delayHistory.setRouteId(routeId);
                 delayHistory.setDelaySeconds(delay);
                 delayHistory.setTimestamp(update.getTimestamp());
+                delayHistory.setRecordedAt(LocalDateTime.now());
                 delayHistoryRepo.save(delayHistory);
 
             }

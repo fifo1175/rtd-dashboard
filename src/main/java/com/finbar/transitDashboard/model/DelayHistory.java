@@ -1,19 +1,20 @@
 package com.finbar.transitDashboard.model;
 
+import com.finbar.transitDashboard.config.LocalDateTimeConverter;
 import jakarta.persistence.*;
-
-import java.io.Serializable;
-import java.util.Objects;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "delay_history")
-@IdClass(DelayHistory.DelayHistoryId.class)
 public class DelayHistory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;  // ⭐ Simple auto-generated ID
 
     @Column(name = "route_id")
     private String routeId;
 
-    @Id
     @Column(name = "trip_id")
     private String tripId;
 
@@ -23,41 +24,20 @@ public class DelayHistory {
     @Column(name = "delay_seconds")
     private Integer delaySeconds;
 
-    @Id
     @Column(name = "timestamp")
     private Long timestamp;
 
+    @Column(name = "recorded_at")
+    @Convert(converter = LocalDateTimeConverter.class)
+    private LocalDateTime recordedAt;
 
-    public Long getTimestamp() {
-        return timestamp;
+    // Getters and Setters
+    public Long getId() {
+        return id;
     }
 
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public Integer getDelaySeconds() {
-        return delaySeconds;
-    }
-
-    public void setDelaySeconds(Integer delaySeconds) {
-        this.delaySeconds = delaySeconds;
-    }
-
-    public String getStopId() {
-        return stopId;
-    }
-
-    public void setStopId(String stopId) {
-        this.stopId = stopId;
-    }
-
-    public String getTripId() {
-        return tripId;
-    }
-
-    public void setTripId(String tripId) {
-        this.tripId = tripId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getRouteId() {
@@ -68,30 +48,52 @@ public class DelayHistory {
         this.routeId = routeId;
     }
 
-    public static class DelayHistoryId implements Serializable {
-        public String tripId;
-        public Long timestamp;
+    public String getTripId() {
+        return tripId;
+    }
 
-        public DelayHistoryId() {}
+    public void setTripId(String tripId) {
+        this.tripId = tripId;
+    }
 
-        public DelayHistoryId(String tripId, Long timestamp) {
-            this.tripId = tripId;
-            this.timestamp = timestamp;
-        }
+    public String getStopId() {
+        return stopId;
+    }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            DelayHistoryId that = (DelayHistoryId) o;
-            return Objects.equals(tripId, that.tripId) &&
-                    Objects.equals(timestamp, that.timestamp);
-        }
+    public void setStopId(String stopId) {
+        this.stopId = stopId;
+    }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(tripId, timestamp);
+    public Integer getDelaySeconds() {
+        return delaySeconds;
+    }
+
+    public void setDelaySeconds(Integer delaySeconds) {
+        this.delaySeconds = delaySeconds;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public LocalDateTime getRecordedAt() {
+        return recordedAt;
+    }
+
+    public void setRecordedAt(LocalDateTime recordedAt) {
+        this.recordedAt = recordedAt;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (recordedAt == null) {
+            recordedAt = LocalDateTime.now();
         }
     }
 }
+
 
