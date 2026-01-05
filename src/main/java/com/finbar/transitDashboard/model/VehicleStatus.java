@@ -1,6 +1,9 @@
 package com.finbar.transitDashboard.model;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -39,10 +42,10 @@ public class VehicleStatus {
 
 
     public String getDelayColor() {
-        if (delaySeconds == null) return "gray";  // No data
-        if (delaySeconds <= 60) return "green";   // On time (within 1 min)
-        if (delaySeconds <= 300) return "yellow"; // 1-5 min late
-        return "red";                              // 5+ min late
+        if (delaySeconds == null) return "UNKNOWN";  // No data
+        if (delaySeconds <= 60) return "ON_TIME";   // On time (within 1 min)
+        if (delaySeconds <= 300) return "MINOR_DELAY"; // 1-5 min late
+        return "MAJOR_DELAY";                              // 5+ min late
     }
 
     public Long getTimestamp() {
@@ -115,6 +118,32 @@ public class VehicleStatus {
 
     public void setVehicleId(String vehicleId) {
         this.vehicleId = vehicleId;
+    }
+
+    public static class DelayHistoryId implements Serializable {
+        private String tripId;
+        private Long timestamp;
+
+        public DelayHistoryId() {}
+
+        public DelayHistoryId(String tripId, Long timestamp) {
+            this.tripId = tripId;
+            this.timestamp = timestamp;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DelayHistory.DelayHistoryId that = (DelayHistory.DelayHistoryId) o;
+            return Objects.equals(tripId, that.tripId) &&
+                    Objects.equals(timestamp, that.timestamp);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(tripId, timestamp);
+        }
     }
 
 }

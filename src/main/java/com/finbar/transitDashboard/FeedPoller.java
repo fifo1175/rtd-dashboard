@@ -1,20 +1,9 @@
 package com.finbar.transitDashboard;
 
-import com.google.transit.realtime.GtfsRealtime.FeedMessage;
-import jakarta.annotation.PreDestroy;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.protocol.Message;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.IntegerSerializer;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -29,14 +18,6 @@ public class FeedPoller {
 	private static Logger log = LoggerFactory.getLogger(FeedPoller.class);
 
 	public FeedPoller() {}
-
-	@Bean
-	private Map<String, Object> producerConfigs() {
-		Map<String, Object> props = new HashMap<>();
-		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-		return props;
-	}
 
 	@Autowired
 	private KafkaTemplate<Integer, byte[]> kafkaTemplate;
