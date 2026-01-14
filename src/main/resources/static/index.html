@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RTD Proactive Operations Dashboard</title>
+    <title>TransitPulse Dashboard</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -270,6 +270,10 @@
             border-radius: 8px;
             padding: 20px;
             border: 1px solid #333333;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .panel h3 {
@@ -306,17 +310,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 18px 0;
             border-bottom: 1px solid #333333;
-            font-size: 13px;
+            font-size: 15px;
             transition: background 0.2s ease;
             cursor: pointer;
+            line-height: 1.6;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .route-item > * {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .route-item:hover {
             background: rgba(255, 255, 255, 0.05);
-            margin: 0 -20px;
-            padding: 12px 20px;
+            margin: 0 -10px;
+            padding: 18px 10px;
             border-radius: 4px;
         }
 
@@ -327,6 +340,30 @@
         .route-item strong {
             font-weight: 600;
             color: #e8e8e8;
+            font-size: 16px;
+        }
+
+        .route-item > span:first-child,
+        .route-item > div:first-child {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .route-item > span:last-child,
+        .route-item > div:last-child {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* Prevent horizontal scrolling in specific panels */
+        #topRoutes,
+        #delayPatterns,
+        #analyticsTopRoutes,
+        #analyticsDelayPatterns {
+            overflow-x: hidden;
+            overflow-y: auto;
+            max-width: 100%;
         }
 
         .chart-container {
@@ -593,13 +630,672 @@
                 min-width: 300px;
             }
         }
+
+        /* Methodology Button and Modal */
+        .methodology-btn {
+            background: #374151;
+            color: #e8e8e8;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .methodology-btn:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .panel-header h3 {
+            margin-bottom: 0;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+            margin: 20px;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #404040;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f5f5f5;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #374151;
+            color: #e8e8e8;
+        }
+
+        .modal-body {
+            color: #d1d5db;
+            line-height: 1.7;
+        }
+
+        .modal-body h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f5f5f5;
+            margin: 24px 0 12px 0;
+        }
+
+        .modal-body h3:first-child {
+            margin-top: 0;
+        }
+
+        .modal-body p {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .modal-body ul {
+            margin: 12px 0 12px 24px;
+        }
+
+        .modal-body li {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .modal-body code {
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            color: #60a5fa;
+        }
+
+        .modal-body .highlight-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid #3b82f6;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 16px 0;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Urgency Labels for Predictions */
+        .urgency-label {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-right: 6px;
+        }
+
+        .urgency-urgent {
+            background: #dc2626;
+            color: white;
+        }
+
+        .urgency-severe {
+            background: #ea580c;
+            color: white;
+        }
+
+        .urgency-moderate {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .urgency-improving {
+            background: #10b981;
+            color: white;
+        }
+
+        .urgency-stable {
+            background: #6b7280;
+            color: white;
+        }
+
+        .prediction-item {
+            position: relative;
+        }
+
+        .prediction-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        /* Prediction Category Filters */
+        .prediction-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #404040;
+            background: #2a2a2a;
+            color: #9ca3af;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .filter-btn:hover {
+            background: #374151;
+            border-color: #4b5563;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        .filter-btn.filter-all.active {
+            background: #3b82f6;
+        }
+
+        .filter-btn.filter-urgent {
+            border-color: #dc2626;
+            color: #fca5a5;
+        }
+
+        .filter-btn.filter-urgent.active {
+            background: #dc2626;
+            color: white;
+        }
+
+        .filter-btn.filter-severe {
+            border-color: #ea580c;
+            color: #fdba74;
+        }
+
+        .filter-btn.filter-severe.active {
+            background: #ea580c;
+            color: white;
+        }
+
+        .filter-btn.filter-moderate {
+            border-color: #f59e0b;
+            color: #fcd34d;
+        }
+
+        .filter-btn.filter-moderate.active {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .filter-btn.filter-improving {
+            border-color: #10b981;
+            color: #6ee7b7;
+        }
+
+        .filter-btn.filter-improving.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .filter-btn.filter-stable {
+            border-color: #6b7280;
+            color: #9ca3af;
+        }
+
+        .filter-btn.filter-stable.active {
+            background: #6b7280;
+            color: white;
+        }
+
+        .filter-count {
+            margin-left: 6px;
+            opacity: 0.7;
+            font-weight: 700;
+        }
+
+        /* Custom View Builder */
+        .custom-view-panel {
+            background: #2a2a2a;
+            border: 2px dashed #404040;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 300px;
+            max-height: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .custom-view-panel:hover {
+            border-color: #3b82f6;
+            background: #2d2d2d;
+        }
+
+        .custom-view-panel.expanded {
+            cursor: default;
+            text-align: left;
+            padding: 20px;
+            border-style: solid;
+            border-color: #3b82f6;
+            min-height: 300px;
+            max-height: 480px;
+            overflow-y: auto;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        .custom-view-plus {
+            font-size: 48px;
+            color: #6b7280;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .custom-view-panel:hover .custom-view-plus {
+            color: #3b82f6;
+            transform: scale(1.1);
+        }
+
+        .custom-view-panel.expanded .custom-view-plus {
+            display: none;
+        }
+
+        .custom-view-title {
+            color: #9ca3af;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .custom-view-panel.expanded .custom-view-title {
+            color: #e8e8e8;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .custom-view-form {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .custom-view-panel.expanded .custom-view-form {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-group label {
+            display: block;
+            color: #d1d5db;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            color: #e8e8e8;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #212121;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .custom-connection-fields {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            border-radius: 6px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .custom-connection-fields.active {
+            display: block;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: #e8e8e8;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .form-hint {
+            color: #6b7280;
+            font-size: 11px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        /* Custom View Data Table */
+        .custom-view-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+
+        .custom-view-table th {
+            background: #1a1a1a;
+            color: #9ca3af;
+            font-weight: 600;
+            text-align: left;
+            padding: 8px;
+            border-bottom: 2px solid #404040;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        .custom-view-table td {
+            padding: 8px;
+            border-bottom: 1px solid #333333;
+            color: #d1d5db;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .custom-view-table th {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .custom-view-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .custom-view-data {
+            max-height: 380px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .panel {
+            min-height: 300px;
+            max-height: 480px;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .panel > *:last-child {
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+        }
+
+        .custom-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .custom-view-header h3 {
+            font-size: 13px;
+            color: #e8e8e8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+
+        .custom-view-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            background: #374151;
+            color: #e8e8e8;
+            transition: all 0.2s ease;
+        }
+
+        .btn-small:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        /* Chart Canvas */
+        .chart-canvas {
+            max-height: 300px;
+            width: 100%;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .stat-box {
+            background: #1a1a1a;
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-box-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .stat-box-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: 0.05em;
+        }
+
+        /* Analytics grid container class for easier targeting */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 24px auto 0 auto;
+            width: 100%;
+            max-width: 1600px;
+        }
+
+        /* Responsive grid - 2 columns on medium screens, 1 on small screens */
+        @media (max-width: 1400px) {
+            .analytics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 <!-- Left Navbar -->
 <nav class="navbar">
     <div class="navbar-brand">
-        <h2>RTD Operations</h2>
+        <h2>TransitPulse</h2>
         <p>Transit Control</p>
     </div>
 
@@ -649,7 +1345,7 @@
     <div class="header">
         <div class="header-content">
             <div class="header-title">
-                <h1>RTD Proactive Operations Dashboard</h1>
+                <h1>TransitPulse Dashboard</h1>
                 <p>Real-time delay monitoring & predictive analytics for transit operations</p>
             </div>
             <div class="alert-dropdown">
@@ -696,17 +1392,46 @@
 
                 <div class="sidebar">
                     <div class="panel">
-                        <h3>Delay Predictions (Next 20 min)</h3>
+                        <div class="panel-header">
+                            <h3>Delay Predictions (Next 20 min)</h3>
+                            <button class="methodology-btn" onclick="openMethodologyModal()">Methodology</button>
+                        </div>
+                        <div class="prediction-filters">
+                            <button class="filter-btn filter-all active" onclick="filterPredictions('all')">
+                                All <span class="filter-count" id="filterCountAll">0</span>
+                            </button>
+                            <button class="filter-btn filter-urgent" onclick="filterPredictions('URGENT')">
+                                Urgent <span class="filter-count" id="filterCountUrgent">0</span>
+                            </button>
+                            <button class="filter-btn filter-severe" onclick="filterPredictions('SEVERE')">
+                                Severe <span class="filter-count" id="filterCountSevere">0</span>
+                            </button>
+                            <button class="filter-btn filter-moderate" onclick="filterPredictions('MODERATE')">
+                                Moderate <span class="filter-count" id="filterCountModerate">0</span>
+                            </button>
+                            <button class="filter-btn filter-improving" onclick="filterPredictions('IMPROVING')">
+                                Improving <span class="filter-count" id="filterCountImproving">0</span>
+                            </button>
+                            <button class="filter-btn filter-stable" onclick="filterPredictions('STABLE')">
+                                Stable <span class="filter-count" id="filterCountStable">0</span>
+                            </button>
+                        </div>
                         <div id="predictionList"></div>
                     </div>
 
                     <div class="panel">
-                        <h3>Problem Routes</h3>
+                        <div class="panel-header">
+                            <h3>Problem Routes</h3>
+                            <button class="methodology-btn" onclick="openProblemRoutesModal()">Info</button>
+                        </div>
                         <div id="topRoutes"></div>
                     </div>
 
                     <div class="panel">
-                        <h3>Delay Hotspots (Last 7 Days)</h3>
+                        <div class="panel-header">
+                            <h3>Delay Hotspots (Last 7 Days)</h3>
+                            <button class="methodology-btn" onclick="openDelayHotspotsModal()">Info</button>
+                        </div>
                         <div id="delayPatterns"></div>
                     </div>
                 </div>
@@ -749,20 +1474,152 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin: 24px auto 0 auto; max-width: 1600px;">
+            <div class="analytics-grid">
                 <div class="panel">
-                    <h3>Delay Predictions (Next 20 min)</h3>
+                    <div class="panel-header">
+                        <h3>Delay Predictions (Next 20 min)</h3>
+                        <button class="methodology-btn" onclick="openMethodologyModal()">Methodology</button>
+                    </div>
+                    <div class="prediction-filters">
+                        <button class="filter-btn filter-all active" onclick="filterAnalyticsPredictions('all')">
+                            All <span class="filter-count" id="filterCountAllAnalytics">0</span>
+                        </button>
+                        <button class="filter-btn filter-urgent" onclick="filterAnalyticsPredictions('URGENT')">
+                            Urgent <span class="filter-count" id="filterCountUrgentAnalytics">0</span>
+                        </button>
+                        <button class="filter-btn filter-severe" onclick="filterAnalyticsPredictions('SEVERE')">
+                            Severe <span class="filter-count" id="filterCountSevereAnalytics">0</span>
+                        </button>
+                        <button class="filter-btn filter-moderate" onclick="filterAnalyticsPredictions('MODERATE')">
+                            Moderate <span class="filter-count" id="filterCountModerateAnalytics">0</span>
+                        </button>
+                        <button class="filter-btn filter-improving" onclick="filterAnalyticsPredictions('IMPROVING')">
+                            Improving <span class="filter-count" id="filterCountImprovingAnalytics">0</span>
+                        </button>
+                        <button class="filter-btn filter-stable" onclick="filterAnalyticsPredictions('STABLE')">
+                            Stable <span class="filter-count" id="filterCountStableAnalytics">0</span>
+                        </button>
+                    </div>
                     <div id="analyticsPredictionList"></div>
                 </div>
 
                 <div class="panel">
-                    <h3>Problem Routes</h3>
+                    <div class="panel-header">
+                        <h3>Problem Routes</h3>
+                        <button class="methodology-btn" onclick="openProblemRoutesModal()">Info</button>
+                    </div>
                     <div id="analyticsTopRoutes"></div>
                 </div>
 
                 <div class="panel">
-                    <h3>Delay Hotspots (Last 7 Days)</h3>
+                    <div class="panel-header">
+                        <h3>Delay Hotspots (Last 7 Days)</h3>
+                        <button class="methodology-btn" onclick="openDelayHotspotsModal()">Info</button>
+                    </div>
                     <div id="analyticsDelayPatterns"></div>
+                </div>
+
+                <!-- Custom View Builder Panel -->
+                <div id="customViewPanel" class="custom-view-panel" onclick="expandCustomView(event)">
+                    <div class="custom-view-plus">+</div>
+                    <div class="custom-view-title">Create Custom View</div>
+
+                    <div class="custom-view-form">
+                        <h3 class="custom-view-title">Create Custom View</h3>
+
+                        <div class="form-group">
+                            <label for="viewName">View Name</label>
+                            <input type="text" id="viewName" placeholder="e.g., Custom Route Analysis">
+                            <div class="form-hint">Give your custom view a descriptive name</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dataSource">Data Source</label>
+                            <select id="dataSource" onchange="handleDataSourceChange()">
+                                <option value="">Select a data source...</option>
+                                <optgroup label="Route Analysis">
+                                    <option value="route">Specific Route</option>
+                                </optgroup>
+                                <optgroup label="Existing APIs">
+                                    <option value="/api/vehicles/current">Current Vehicles</option>
+                                    <option value="/api/delays/summary">Delay Summary</option>
+                                    <option value="/api/delays/top-routes">Top Problem Routes</option>
+                                    <option value="/api/delays/patterns">Delay Patterns</option>
+                                    <option value="/api/predictions">Delay Predictions</option>
+                                    <option value="/api/alerts/active">Active Alerts</option>
+                                </optgroup>
+                                <optgroup label="Custom Connection">
+                                    <option value="custom">+ Add Custom Connection</option>
+                                </optgroup>
+                            </select>
+                            <div class="form-hint">Select from existing APIs or create a custom connection</div>
+                        </div>
+
+                        <div id="routeIdFields" class="custom-connection-fields">
+                            <div class="form-group">
+                                <label for="routeId">Route ID</label>
+                                <input type="text" id="routeId" placeholder="e.g., 15">
+                                <div class="form-hint">Enter the specific route number you want to monitor</div>
+                            </div>
+                        </div>
+
+                        <div id="customConnectionFields" class="custom-connection-fields">
+                            <div class="form-group">
+                                <label for="connectionType">Connection Type</label>
+                                <select id="connectionType">
+                                    <option value="api">REST API</option>
+                                    <option value="database">Database (PostgreSQL/MySQL)</option>
+                                    <option value="csv">CSV File Upload</option>
+                                    <option value="websocket">WebSocket Stream</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="connectionUrl">Connection URL / Endpoint</label>
+                                <input type="text" id="connectionUrl" placeholder="e.g., https://api.example.com/data or jdbc:postgresql://localhost:5432/db">
+                                <div class="form-hint">Enter the API endpoint, database connection string, or leave blank for CSV upload</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="authMethod">Authentication (Optional)</label>
+                                <select id="authMethod">
+                                    <option value="none">None</option>
+                                    <option value="bearer">Bearer Token</option>
+                                    <option value="apikey">API Key</option>
+                                    <option value="basic">Basic Auth</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="authValue">Authentication Value</label>
+                                <input type="password" id="authValue" placeholder="Token, API key, or credentials">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="visualizationType">Visualization Type</label>
+                            <select id="visualizationType">
+                                <option value="table">Data Table</option>
+                                <option value="line-chart">Line Chart</option>
+                                <option value="bar-chart">Bar Chart</option>
+                                <option value="pie-chart">Pie Chart</option>
+                                <option value="stat-card">Stat Card</option>
+                                <option value="map">Map View</option>
+                            </select>
+                            <div class="form-hint">How should the data be displayed?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="refreshInterval">Refresh Interval (seconds)</label>
+                            <input type="number" id="refreshInterval" value="30" min="5" max="300">
+                            <div class="form-hint">How often should the data refresh? (5-300 seconds)</div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="saveCustomView()">Create View</button>
+                            <button class="btn btn-secondary" onclick="cancelCustomView()">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -859,10 +1716,15 @@
     }
 
     function updateAlertsPage() {
+        const container = document.getElementById('alertsPageList');
+        container.innerHTML = '<div class="empty-state">Loading alerts...</div>';
+
         fetch('http://localhost:8080/api/alerts/active')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                return r.json();
+            })
             .then(alerts => {
-                const container = document.getElementById('alertsPageList');
                 if (alerts.length === 0) {
                     container.innerHTML = '<div class="empty-state">No active alerts</div>';
                     return;
@@ -880,12 +1742,21 @@
                 `).join('');
                 container.innerHTML = html;
             })
-            .catch(err => console.error('Error fetching alerts:', err));
+            .catch(err => {
+                console.error('Error fetching alerts:', err);
+                container.innerHTML = `<div class="empty-state" style="color: #ef4444;">Error loading alerts: ${err.message}<br>Check console for details</div>`;
+            });
     }
 
     function updateVehiclesPage() {
+        const container = document.getElementById('vehicleStats');
+        container.innerHTML = '<div class="empty-state">Loading vehicle statistics...</div>';
+
         fetch('http://localhost:8080/api/delays/summary')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                return r.json();
+            })
             .then(stats => {
                 const html = `
                     <div class="stat-card">
@@ -913,19 +1784,33 @@
                         <div class="stat-label">On-Time Performance</div>
                     </div>
                 `;
-                document.getElementById('vehicleStats').innerHTML = html;
+                container.innerHTML = html;
             })
-            .catch(err => console.error('Error fetching vehicle stats:', err));
+            .catch(err => {
+                console.error('Error fetching vehicle stats:', err);
+                container.innerHTML = `<div class="empty-state" style="color: #ef4444;">Error loading vehicle stats: ${err.message}<br>Check console for details</div>`;
+            });
     }
 
     function updateRoutesPage() {
+        // Show loading states
+        document.getElementById('earlyRoutesPanel').innerHTML = '<div class="empty-state">Loading...</div>';
+        document.getElementById('routeSummary').innerHTML = '<div class="empty-state">Loading...</div>';
+        document.getElementById('routeStats').innerHTML = '<div class="empty-state">Loading...</div>';
+
         // Fetch delayed routes
         fetch('http://localhost:8080/api/delays/top-routes')
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                return r.json();
+            })
             .then(routes => {
                 // Fetch current vehicles to find early routes
                 return fetch('http://localhost:8080/api/vehicles/current')
-                    .then(v => v.json())
+                    .then(v => {
+                        if (!v.ok) throw new Error(`HTTP error! status: ${v.status}`);
+                        return v.json();
+                    })
                     .then(vehicles => {
                         // Group vehicles by route and calculate average delay
                         const routeStats = {};
@@ -949,30 +1834,54 @@
                             .filter(r => r.avg_delay < -180 && r.count >= 2)
                             .sort((a, b) => a.avg_delay - b.avg_delay);
 
-                        // Show early routes alert if any exist
-                        const alertContainer = document.getElementById('earlyRoutesAlert');
+                        // Display early routes in the panel
+                        const earlyRoutesPanel = document.getElementById('earlyRoutesPanel');
                         if (earlyRoutes.length > 0) {
-                            const earlyRoutesList = earlyRoutes.map(r =>
-                                `<strong style="color: #60a5fa; font-size: 16px;">Route ${r.route_id}</strong> (${Math.abs(Math.round(r.avg_delay / 60))} min early)`
-                            ).join(', ');
+                            const earlyRoutesHtml = earlyRoutes.map(r => `
+                                <div class="route-item" onclick="switchPage('dashboard'); setTimeout(() => zoomToRoute('${r.route_id}'), 100)">
+                                    <span><strong>Route ${r.route_id}</strong></span>
+                                    <span style="color: #60a5fa; font-weight: 600; font-size: 16px;">${Math.abs(Math.round(r.avg_delay / 60))} min early</span>
+                                </div>
+                            `).join('');
 
-                            alertContainer.innerHTML = `
-                                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px;">
-                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                        <span style="font-size: 24px;">💡</span>
-                                        <h3 style="font-size: 16px; font-weight: 600; color: #e8e8e8; margin: 0;">Resource Allocation Opportunity</h3>
-                                    </div>
-                                    <p style="color: #d1d5db; font-size: 14px; margin-bottom: 8px;">
-                                        The following routes are consistently running early: ${earlyRoutesList}
-                                    </p>
-                                    <p style="color: #93c5fd; font-size: 13px; font-style: italic;">
-                                        → Consider reallocating resources from these routes to routes experiencing delays
+                            earlyRoutesPanel.innerHTML = `
+                                ${earlyRoutesHtml}
+                                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-radius: 6px; padding: 12px; margin-top: 16px;">
+                                    <p style="color: #93c5fd; font-size: 12px; margin: 0;">
+                                        💡 <strong>Suggestion:</strong> Consider reallocating resources from these routes to routes experiencing delays
                                     </p>
                                 </div>
                             `;
                         } else {
-                            alertContainer.innerHTML = '';
+                            earlyRoutesPanel.innerHTML = '<div class="empty-state">No consistently early routes detected</div>';
                         }
+
+                        // Calculate and display route performance summary
+                        const totalRoutes = Object.keys(routeStats).length;
+                        const delayedRoutes = routes.length;
+                        const onTimeRoutes = totalRoutes - earlyRoutes.length - delayedRoutes;
+
+                        const routeSummaryPanel = document.getElementById('routeSummary');
+                        routeSummaryPanel.innerHTML = `
+                            <div style="display: grid; gap: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333333;">
+                                    <span style="color: #e8e8e8; font-size: 14px; font-weight: 500;">Total Active Routes</span>
+                                    <span style="color: #e8e8e8; font-size: 24px; font-weight: 600;">${totalRoutes}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333333;">
+                                    <span style="color: #9ca3af; font-size: 14px;">On-Time Routes</span>
+                                    <span style="color: #10b981; font-size: 20px; font-weight: 600;">${onTimeRoutes}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333333;">
+                                    <span style="color: #9ca3af; font-size: 14px;">Problem Routes</span>
+                                    <span style="color: #ef4444; font-size: 20px; font-weight: 600;">${delayedRoutes}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
+                                    <span style="color: #9ca3af; font-size: 14px;">Early Routes</span>
+                                    <span style="color: #60a5fa; font-size: 20px; font-weight: 600;">${earlyRoutes.length}</span>
+                                </div>
+                            </div>
+                        `;
 
                         // Display delayed routes
                         if (routes.length === 0) {
@@ -980,20 +1889,28 @@
                             return;
                         }
 
+                        lastProblemRoutesUpdate = Date.now();
+                        const timeAgo = getTimeAgo(lastProblemRoutesUpdate);
                         const html = routes.slice(0, 12).map(r => `
                             <div class="stat-card" onclick="switchPage('dashboard'); setTimeout(() => zoomToRoute('${r.route_id}'), 100)" style="cursor: pointer;">
                                 <div style="font-size: 48px; font-weight: 700; color: #e8e8e8; margin-bottom: 12px; letter-spacing: -0.02em;">
                                     Route ${r.route_id}
                                 </div>
-                                <div class="stat-number major-delay" style="font-size: 28px;">${r.avg_delay_minutes} min</div>
-                                <div class="stat-label">Average Delay</div>
-                                <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${r.incident_count} delays recorded</p>
+                                <div class="stat-number major-delay" style="font-size: 28px;">${r.avg_delay_minutes} min delay (current)</div>
+                                <div class="stat-label">Real-time Snapshot</div>
+                                <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${r.incident_count} recent data points</p>
                             </div>
                         `).join('');
-                        document.getElementById('routeStats').innerHTML = html;
+                        const footer = routes.length > 0 ? `<div style="color: #6b7280; font-size: 12px; margin-top: 16px; text-align: center; grid-column: 1 / -1;">Last updated: ${timeAgo}</div>` : '';
+                        document.getElementById('routeStats').innerHTML = html + footer;
                     });
             })
-            .catch(err => console.error('Error fetching route stats:', err));
+            .catch(err => {
+                console.error('Error fetching route stats:', err);
+                document.getElementById('earlyRoutesPanel').innerHTML = `<div class="empty-state" style="color: #ef4444;">Error: ${err.message}</div>`;
+                document.getElementById('routeSummary').innerHTML = `<div class="empty-state" style="color: #ef4444;">Error: ${err.message}</div>`;
+                document.getElementById('routeStats').innerHTML = `<div class="empty-state" style="color: #ef4444;">Error loading routes: ${err.message}<br>Check console for details</div>`;
+            });
     }
 
     function updateAnalyticsPage() {
@@ -1008,19 +1925,13 @@
             })
             .catch(err => console.error('Error fetching analytics stats:', err));
 
-        // Update predictions
+        // Update predictions for Analytics page
         fetch('http://localhost:8080/api/predictions')
             .then(r => r.json())
             .then(predictions => {
-                const html = predictions.slice(0, 5).map(p => `
-                    <div class="prediction-item" onclick="switchPage('dashboard'); setTimeout(() => zoomToVehicle('${p.vehicle_id}'), 100)">
-                        <strong>Route ${p.route_id}</strong>: Currently ${p.current_delay_min} min delayed,
-                        predicted ${p.predicted_delay_min} min in 20 min (${p.confidence} confidence)
-                        <br><em>→ ${p.action}</em>
-                    </div>
-                `).join('');
-                document.getElementById('analyticsPredictionList').innerHTML =
-                    html || '<div class="empty-state">No significant delays predicted</div>';
+                allAnalyticsPredictions = predictions;
+                updateAnalyticsPredictionCounts();
+                renderAnalyticsPredictions(currentAnalyticsFilter);
             })
             .catch(err => console.error('Error fetching analytics predictions:', err));
 
@@ -1028,14 +1939,25 @@
         fetch('http://localhost:8080/api/delays/top-routes')
             .then(r => r.json())
             .then(routes => {
+                lastProblemRoutesUpdate = Date.now();
+                const timeAgo = getTimeAgo(lastProblemRoutesUpdate);
                 const html = routes.slice(0, 5).map(r => `
                     <div class="route-item" onclick="switchPage('dashboard'); setTimeout(() => zoomToRoute('${r.route_id}'), 100)">
-                        <span><strong>Route ${r.route_id}</strong></span>
-                        <span class="major-delay">${r.avg_delay_minutes} min avg</span>
+                        <div>
+                            <strong>Route ${r.route_id}</strong>
+                            <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
+                                ${r.incident_count} recent data points
+                            </div>
+                        </div>
+                        <span class="major-delay">${r.avg_delay_minutes} min delay (current)</span>
                     </div>
                 `).join('');
+                const footer = routes.length > 0 ? `<div style="font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center;">Last updated: ${timeAgo}</div>` : '';
                 document.getElementById('analyticsTopRoutes').innerHTML =
                     html || '<div class="empty-state">No problem routes detected</div>';
+                if (footer) {
+                    document.getElementById('analyticsTopRoutes').innerHTML += footer;
+                }
             })
             .catch(err => console.error('Error fetching analytics routes:', err));
 
@@ -1259,35 +2181,198 @@
             .catch(err => console.error('Error fetching stats:', err));
     }
 
+    // Global storage for predictions (Dashboard)
+    let allPredictions = [];
+    let currentFilter = 'all';
+
+    // Global storage for predictions (Analytics)
+    let allAnalyticsPredictions = [];
+    let currentAnalyticsFilter = 'all';
+
+    // Track last update times for problem routes
+    let lastProblemRoutesUpdate = null;
+
+    // Format time ago for display
+    function getTimeAgo(timestamp) {
+        if (!timestamp) return 'just now';
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes === 1) return '1 min ago';
+        if (minutes < 60) return `${minutes} mins ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours === 1) return '1 hour ago';
+        return `${hours} hours ago`;
+    }
+
+    // Determine urgency level from action text
+    function getUrgencyLevel(action) {
+        if (action.includes('URGENT')) return { level: 'URGENT', class: 'urgency-urgent' };
+        if (action.includes('Deploy backup bus and update')) return { level: 'SEVERE', class: 'urgency-severe' };
+        if (action.includes('Monitor closely')) return { level: 'MODERATE', class: 'urgency-moderate' };
+        if (action.includes('improving')) return { level: 'IMPROVING', class: 'urgency-improving' };
+        return { level: 'STABLE', class: 'urgency-stable' };
+    }
+
     function updatePredictions() {
         fetch('http://localhost:8080/api/predictions')
             .then(r => r.json())
             .then(predictions => {
-                const html = predictions.slice(0, 5).map(p => `
-                    <div class="prediction-item" onclick="zoomToVehicle('${p.vehicle_id}')">
-                        <strong>Route ${p.route_id}</strong>: Currently ${p.current_delay_min} min delayed,
-                        predicted ${p.predicted_delay_min} min in 20 min (${p.confidence} confidence)
-                        <br><em>→ ${p.action}</em>
-                    </div>
-                `).join('');
-                document.getElementById('predictionList').innerHTML =
-                    html || '<div class="empty-state">No significant delays predicted</div>';
+                allPredictions = predictions;
+                updatePredictionCounts();
+                renderPredictions(currentFilter);
             })
             .catch(err => console.error('Error fetching predictions:', err));
+    }
+
+    function updatePredictionCounts() {
+        const counts = {
+            all: allPredictions.length,
+            URGENT: 0,
+            SEVERE: 0,
+            MODERATE: 0,
+            IMPROVING: 0,
+            STABLE: 0
+        };
+
+        allPredictions.forEach(p => {
+            const urgency = getUrgencyLevel(p.action);
+            counts[urgency.level]++;
+        });
+
+        document.getElementById('filterCountAll').textContent = counts.all;
+        document.getElementById('filterCountUrgent').textContent = counts.URGENT;
+        document.getElementById('filterCountSevere').textContent = counts.SEVERE;
+        document.getElementById('filterCountModerate').textContent = counts.MODERATE;
+        document.getElementById('filterCountImproving').textContent = counts.IMPROVING;
+        document.getElementById('filterCountStable').textContent = counts.STABLE;
+    }
+
+    function renderPredictions(filter) {
+        let filtered = allPredictions;
+        if (filter !== 'all') {
+            filtered = allPredictions.filter(p => {
+                const urgency = getUrgencyLevel(p.action);
+                return urgency.level === filter;
+            });
+        }
+
+        const html = filtered.slice(0, 10).map(p => {
+            const urgency = getUrgencyLevel(p.action);
+            return `
+            <div class="prediction-item" onclick="zoomToVehicle('${p.vehicle_id}')">
+                <div class="prediction-header">
+                    <span class="urgency-label ${urgency.class}">${urgency.level}</span>
+                    <strong>Route ${p.route_id}</strong>
+                </div>
+                Currently ${p.current_delay_min} min delayed,
+                predicted ${p.predicted_delay_min} min in 20 min (${p.confidence} confidence)
+                <br><em>→ ${p.action}</em>
+            </div>
+        `;
+        }).join('');
+
+        document.getElementById('predictionList').innerHTML =
+            html || '<div class="empty-state">No predictions in this category</div>';
+    }
+
+    function filterPredictions(category) {
+        currentFilter = category;
+        renderPredictions(category);
+
+        // Update button states
+        document.querySelectorAll('#dashboardPage .prediction-filters .filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.closest('.filter-btn').classList.add('active');
+    }
+
+    // Analytics page prediction functions
+    function updateAnalyticsPredictionCounts() {
+        const counts = {
+            all: allAnalyticsPredictions.length,
+            URGENT: 0,
+            SEVERE: 0,
+            MODERATE: 0,
+            IMPROVING: 0,
+            STABLE: 0
+        };
+
+        allAnalyticsPredictions.forEach(p => {
+            const urgency = getUrgencyLevel(p.action);
+            counts[urgency.level]++;
+        });
+
+        document.getElementById('filterCountAllAnalytics').textContent = counts.all;
+        document.getElementById('filterCountUrgentAnalytics').textContent = counts.URGENT;
+        document.getElementById('filterCountSevereAnalytics').textContent = counts.SEVERE;
+        document.getElementById('filterCountModerateAnalytics').textContent = counts.MODERATE;
+        document.getElementById('filterCountImprovingAnalytics').textContent = counts.IMPROVING;
+        document.getElementById('filterCountStableAnalytics').textContent = counts.STABLE;
+    }
+
+    function renderAnalyticsPredictions(filter) {
+        let filtered = allAnalyticsPredictions;
+        if (filter !== 'all') {
+            filtered = allAnalyticsPredictions.filter(p => {
+                const urgency = getUrgencyLevel(p.action);
+                return urgency.level === filter;
+            });
+        }
+
+        const html = filtered.slice(0, 10).map(p => {
+            const urgency = getUrgencyLevel(p.action);
+            return `
+            <div class="prediction-item" onclick="switchPage('dashboard'); setTimeout(() => zoomToVehicle('${p.vehicle_id}'), 100)">
+                <div class="prediction-header">
+                    <span class="urgency-label ${urgency.class}">${urgency.level}</span>
+                    <strong>Route ${p.route_id}</strong>
+                </div>
+                Currently ${p.current_delay_min} min delayed,
+                predicted ${p.predicted_delay_min} min in 20 min (${p.confidence} confidence)
+                <br><em>→ ${p.action}</em>
+            </div>
+        `;
+        }).join('');
+
+        document.getElementById('analyticsPredictionList').innerHTML =
+            html || '<div class="empty-state">No predictions in this category</div>';
+    }
+
+    function filterAnalyticsPredictions(category) {
+        currentAnalyticsFilter = category;
+        renderAnalyticsPredictions(category);
+
+        // Update button states
+        document.querySelectorAll('#analyticsPage .prediction-filters .filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.closest('.filter-btn').classList.add('active');
     }
 
     function updateTopRoutes() {
         fetch('http://localhost:8080/api/delays/top-routes')
             .then(r => r.json())
             .then(routes => {
+                lastProblemRoutesUpdate = Date.now();
+                const timeAgo = getTimeAgo(lastProblemRoutesUpdate);
                 const html = routes.slice(0, 5).map(r => `
                     <div class="route-item" onclick="zoomToRoute('${r.route_id}')">
-                        <span><strong>Route ${r.route_id}</strong></span>
-                        <span class="major-delay">${r.avg_delay_minutes} min avg</span>
+                        <div>
+                            <strong>Route ${r.route_id}</strong>
+                            <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
+                                ${r.incident_count} recent data points
+                            </div>
+                        </div>
+                        <span class="major-delay">${r.avg_delay_minutes} min delay (current)</span>
                     </div>
                 `).join('');
+                const footer = routes.length > 0 ? `<div style="font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center;">Last updated: ${timeAgo}</div>` : '';
                 document.getElementById('topRoutes').innerHTML =
                     html || '<div class="empty-state">No problem routes detected</div>';
+                if (footer) {
+                    document.getElementById('topRoutes').innerHTML += footer;
+                }
             })
             .catch(err => console.error('Error fetching routes:', err));
     }
@@ -1375,6 +2460,997 @@
     setInterval(updatePatterns, 60000);
 
     console.log('RTD Dashboard loaded. Updates every 30 seconds.');
+
+    // Methodology Modal Functions
+    function openMethodologyModal() {
+        document.getElementById('methodologyModal').classList.add('show');
+    }
+
+    function closeMethodologyModal() {
+        document.getElementById('methodologyModal').classList.remove('show');
+    }
+
+    // Problem Routes Modal Functions
+    function openProblemRoutesModal() {
+        document.getElementById('problemRoutesModal').classList.add('show');
+    }
+
+    function closeProblemRoutesModal() {
+        document.getElementById('problemRoutesModal').classList.remove('show');
+    }
+
+    // Delay Hotspots Modal Functions
+    function openDelayHotspotsModal() {
+        document.getElementById('delayHotspotsModal').classList.add('show');
+    }
+
+    function closeDelayHotspotsModal() {
+        document.getElementById('delayHotspotsModal').classList.remove('show');
+    }
+
+    // Close modals when clicking outside
+    document.addEventListener('click', function(event) {
+        const methodologyModal = document.getElementById('methodologyModal');
+        const problemRoutesModal = document.getElementById('problemRoutesModal');
+        const delayHotspotsModal = document.getElementById('delayHotspotsModal');
+
+        if (event.target === methodologyModal) {
+            closeMethodologyModal();
+        }
+        if (event.target === problemRoutesModal) {
+            closeProblemRoutesModal();
+        }
+        if (event.target === delayHotspotsModal) {
+            closeDelayHotspotsModal();
+        }
+    });
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeMethodologyModal();
+            closeProblemRoutesModal();
+            closeDelayHotspotsModal();
+        }
+    });
+
+    // Custom View Builder Functions
+    function expandCustomView(event) {
+        const panel = document.getElementById('customViewPanel');
+
+        // If panel is already expanded, don't collapse it when clicking inside the form
+        if (panel.classList.contains('expanded')) {
+            return;
+        }
+
+        // Expand the panel
+        panel.classList.add('expanded');
+        panel.onclick = null; // Remove the click handler to prevent collapsing when clicking inside
+    }
+
+    function handleDataSourceChange() {
+        const dataSource = document.getElementById('dataSource').value;
+        const customFields = document.getElementById('customConnectionFields');
+        const routeIdFields = document.getElementById('routeIdFields');
+        const vizSelect = document.getElementById('visualizationType');
+
+        // Hide all conditional fields first
+        customFields.classList.remove('active');
+        routeIdFields.classList.remove('active');
+
+        // Show appropriate fields based on selection
+        if (dataSource === 'custom') {
+            customFields.classList.add('active');
+        } else if (dataSource === 'route') {
+            routeIdFields.classList.add('active');
+        }
+
+        // Update available visualization types based on data source
+        const vizOptions = {
+            'route': ['table', 'stat-card', 'bar-chart', 'pie-chart', 'map'],
+            '/api/vehicles/current': ['table', 'stat-card', 'bar-chart', 'pie-chart', 'map'],
+            '/api/delays/summary': ['stat-card', 'pie-chart', 'bar-chart', 'table'],
+            '/api/delays/top-routes': ['table', 'bar-chart', 'stat-card'],
+            '/api/delays/patterns': ['table', 'bar-chart', 'line-chart', 'stat-card'],
+            '/api/predictions': ['table', 'bar-chart', 'stat-card'],
+            '/api/alerts/active': ['table', 'stat-card', 'bar-chart']
+        };
+
+        const vizLabels = {
+            'table': 'Data Table',
+            'line-chart': 'Line Chart',
+            'bar-chart': 'Bar Chart',
+            'pie-chart': 'Pie Chart',
+            'stat-card': 'Stat Card',
+            'map': 'Map View'
+        };
+
+        const currentValue = vizSelect.value;
+        const allowedViz = vizOptions[dataSource] || ['table', 'bar-chart', 'line-chart', 'pie-chart', 'stat-card', 'map'];
+
+        // Rebuild visualization options
+        vizSelect.innerHTML = '';
+        allowedViz.forEach(viz => {
+            const option = document.createElement('option');
+            option.value = viz;
+            option.textContent = vizLabels[viz];
+            vizSelect.appendChild(option);
+        });
+
+        // Restore previous value if still available, otherwise select first option
+        if (allowedViz.includes(currentValue)) {
+            vizSelect.value = currentValue;
+        }
+    }
+
+    function cancelCustomView() {
+        const panel = document.getElementById('customViewPanel');
+        panel.classList.remove('expanded');
+        panel.onclick = expandCustomView;
+
+        // Reset form
+        document.getElementById('viewName').value = '';
+        document.getElementById('dataSource').value = '';
+        document.getElementById('routeId').value = '';
+        document.getElementById('connectionType').value = 'api';
+        document.getElementById('connectionUrl').value = '';
+        document.getElementById('authMethod').value = 'none';
+        document.getElementById('authValue').value = '';
+        document.getElementById('visualizationType').value = 'table';
+        document.getElementById('refreshInterval').value = '30';
+        document.getElementById('customConnectionFields').classList.remove('active');
+        document.getElementById('routeIdFields').classList.remove('active');
+    }
+
+    function saveCustomView() {
+        const viewConfig = {
+            name: document.getElementById('viewName').value,
+            dataSource: document.getElementById('dataSource').value,
+            visualizationType: document.getElementById('visualizationType').value,
+            refreshInterval: parseInt(document.getElementById('refreshInterval').value) * 1000
+        };
+
+        // If route is selected, add route ID
+        if (viewConfig.dataSource === 'route') {
+            viewConfig.routeId = document.getElementById('routeId').value;
+        }
+
+        // If custom connection is selected, add those details
+        if (viewConfig.dataSource === 'custom') {
+            viewConfig.customConnection = {
+                type: document.getElementById('connectionType').value,
+                url: document.getElementById('connectionUrl').value,
+                authMethod: document.getElementById('authMethod').value,
+                authValue: document.getElementById('authValue').value
+            };
+        }
+
+        // Validate required fields
+        if (!viewConfig.name) {
+            alert('Please enter a view name');
+            return;
+        }
+
+        if (!viewConfig.dataSource) {
+            alert('Please select a data source');
+            return;
+        }
+
+        if (viewConfig.dataSource === 'route' && !viewConfig.routeId) {
+            alert('Please enter a route ID');
+            return;
+        }
+
+        if (viewConfig.dataSource === 'custom' && !viewConfig.customConnection.url) {
+            alert('Please enter a connection URL for your custom data source');
+            return;
+        }
+
+        // Store in localStorage
+        let customViews = JSON.parse(localStorage.getItem('customViews') || '[]');
+        viewConfig.id = 'view_' + Date.now();
+        customViews.push(viewConfig);
+        localStorage.setItem('customViews', JSON.stringify(customViews));
+
+        console.log('Custom view saved:', viewConfig);
+
+        // Reset and collapse the panel
+        cancelCustomView();
+
+        // Render the custom view
+        renderCustomView(viewConfig);
+    }
+
+    // Store active custom view intervals for cleanup
+    const customViewIntervals = {};
+
+    function renderCustomView(viewConfig) {
+        // Find the grid container
+        const gridContainer = document.querySelector('#analyticsPage > div:last-child');
+
+        // Create the panel element
+        const panel = document.createElement('div');
+        panel.className = 'panel';
+        panel.id = viewConfig.id;
+        panel.innerHTML = `
+            <div class="custom-view-header">
+                <h3>${viewConfig.name}</h3>
+                <div class="custom-view-actions">
+                    <button class="btn-small" onclick="refreshCustomView('${viewConfig.id}')">↻ Refresh</button>
+                    <button class="btn-small btn-danger" onclick="deleteCustomView('${viewConfig.id}')">✕ Delete</button>
+                </div>
+            </div>
+            <div id="${viewConfig.id}_content" class="custom-view-data">
+                <div class="empty-state">Loading...</div>
+            </div>
+        `;
+
+        // Insert before the custom view panel (the "+" panel)
+        const customViewPanel = document.getElementById('customViewPanel');
+        gridContainer.insertBefore(panel, customViewPanel);
+
+        // Fetch and render data
+        fetchCustomViewData(viewConfig);
+
+        // Set up auto-refresh
+        if (viewConfig.refreshInterval > 0) {
+            customViewIntervals[viewConfig.id] = setInterval(() => {
+                fetchCustomViewData(viewConfig);
+            }, viewConfig.refreshInterval);
+        }
+    }
+
+    function fetchCustomViewData(viewConfig) {
+        const contentDiv = document.getElementById(viewConfig.id + '_content');
+
+        // Determine the API endpoint
+        let apiUrl = '';
+        if (viewConfig.dataSource === 'route') {
+            // For route-specific data, fetch from multiple endpoints
+            Promise.all([
+                fetch('http://localhost:8080/api/vehicles/current').then(r => r.json()),
+                fetch('http://localhost:8080/api/predictions').then(r => r.json())
+            ]).then(([vehicles, predictions]) => {
+                const routeVehicles = vehicles.filter(v => v.route_id === viewConfig.routeId);
+                const routePredictions = predictions.filter(p => p.route_id === viewConfig.routeId);
+                const data = {
+                    vehicles: routeVehicles,
+                    predictions: routePredictions,
+                    stats: calculateRouteStats(routeVehicles),
+                    routeId: viewConfig.routeId
+                };
+                renderVisualization(viewConfig, data, 'route');
+            }).catch(err => {
+                console.error('Error fetching route data:', err);
+                contentDiv.innerHTML = '<div class="empty-state" style="color: #ef4444;">Error loading data</div>';
+            });
+        } else {
+            // For other API endpoints, fetch directly
+            apiUrl = 'http://localhost:8080' + viewConfig.dataSource;
+            fetch(apiUrl)
+                .then(r => r.json())
+                .then(data => {
+                    renderVisualization(viewConfig, data, viewConfig.dataSource);
+                })
+                .catch(err => {
+                    console.error('Error fetching data:', err);
+                    contentDiv.innerHTML = '<div class="empty-state" style="color: #ef4444;">Error loading data</div>';
+                });
+        }
+    }
+
+    function renderVisualization(viewConfig, data, dataSource) {
+        const contentDiv = document.getElementById(viewConfig.id + '_content');
+
+        switch(viewConfig.visualizationType) {
+            case 'table':
+                renderDataTable(contentDiv, data, dataSource, viewConfig);
+                break;
+            case 'bar-chart':
+                renderBarChart(contentDiv, data, dataSource, viewConfig);
+                break;
+            case 'line-chart':
+                renderLineChart(contentDiv, data, dataSource, viewConfig);
+                break;
+            case 'pie-chart':
+                renderPieChart(contentDiv, data, dataSource, viewConfig);
+                break;
+            case 'stat-card':
+                renderStatCard(contentDiv, data, dataSource, viewConfig);
+                break;
+            case 'map':
+                renderMapView(contentDiv, data, dataSource, viewConfig);
+                break;
+            default:
+                contentDiv.innerHTML = '<div class="empty-state">Visualization type not supported</div>';
+        }
+    }
+
+    function calculateRouteStats(vehicles) {
+        if (vehicles.length === 0) {
+            return { onTime: 0, delayed: 0, avgDelay: 0, total: 0 };
+        }
+
+        const onTime = vehicles.filter(v => v.delay_seconds != null && Math.abs(v.delay_seconds) <= 180).length;
+        const delayed = vehicles.filter(v => v.delay_seconds != null && v.delay_seconds > 180).length;
+        const totalDelay = vehicles.reduce((sum, v) => sum + (v.delay_seconds || 0), 0);
+        const avgDelay = totalDelay / vehicles.length;
+
+        return {
+            onTime,
+            delayed,
+            avgDelay: (avgDelay / 60).toFixed(1),
+            total: vehicles.length
+        };
+    }
+
+    function renderRouteTable(viewId, data, routeId) {
+        const contentDiv = document.getElementById(viewId + '_content');
+
+        if (data.vehicles.length === 0 && data.predictions.length === 0) {
+            contentDiv.innerHTML = `<div class="empty-state">No data available for Route ${routeId}</div>`;
+            return;
+        }
+
+        let html = `
+            <div style="margin-bottom: 12px; padding: 12px; background: #1a1a1a; border-radius: 6px;">
+                <h4 style="color: #e8e8e8; font-size: 12px; margin-bottom: 8px;">Route ${routeId} Statistics</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                    <div>
+                        <div style="color: #6b7280; font-size: 10px; text-transform: uppercase;">Total Vehicles</div>
+                        <div style="color: #e8e8e8; font-size: 18px; font-weight: 600;">${data.stats.total}</div>
+                    </div>
+                    <div>
+                        <div style="color: #6b7280; font-size: 10px; text-transform: uppercase;">On Time</div>
+                        <div style="color: #10b981; font-size: 18px; font-weight: 600;">${data.stats.onTime}</div>
+                    </div>
+                    <div>
+                        <div style="color: #6b7280; font-size: 10px; text-transform: uppercase;">Delayed</div>
+                        <div style="color: #ef4444; font-size: 18px; font-weight: 600;">${data.stats.delayed}</div>
+                    </div>
+                    <div>
+                        <div style="color: #6b7280; font-size: 10px; text-transform: uppercase;">Avg Delay</div>
+                        <div style="color: #f59e0b; font-size: 18px; font-weight: 600;">${data.stats.avgDelay} min</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (data.vehicles.length > 0) {
+            html += `
+                <h4 style="color: #e8e8e8; font-size: 11px; margin: 12px 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;">Active Vehicles</h4>
+                <table class="custom-view-table">
+                    <thead>
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Current Delay</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.vehicles.forEach(v => {
+                const delayMin = v.delay_minutes ? v.delay_minutes.toFixed(1) : '0.0';
+                const delayColor = Math.abs(v.delay_seconds) <= 180 ? '#10b981' :
+                                   v.delay_seconds <= 600 ? '#f59e0b' : '#ef4444';
+                const status = v.delay_category ? v.delay_category.replace('_', ' ') : 'Unknown';
+
+                html += `
+                    <tr>
+                        <td><strong>${v.vehicle_id}</strong></td>
+                        <td style="color: ${delayColor}; font-weight: 600;">${delayMin} min</td>
+                        <td>${status}</td>
+                        <td>${v.latitude ? v.latitude.toFixed(4) + ', ' + v.longitude.toFixed(4) : 'N/A'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+        }
+
+        if (data.predictions.length > 0) {
+            html += `
+                <h4 style="color: #e8e8e8; font-size: 11px; margin: 12px 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;">Predictions (Next 20 min)</h4>
+                <table class="custom-view-table">
+                    <thead>
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Current Delay</th>
+                            <th>Predicted Delay</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.predictions.forEach(p => {
+                html += `
+                    <tr>
+                        <td><strong>${p.vehicle_id}</strong></td>
+                        <td style="color: #f59e0b;">${p.current_delay_min} min</td>
+                        <td style="color: #ef4444; font-weight: 600;">${p.predicted_delay_min} min</td>
+                        <td>${p.confidence}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+        }
+
+        contentDiv.innerHTML = html;
+    }
+
+    // ===== NEW RENDERING FUNCTIONS FOR ALL VISUALIZATION TYPES =====
+
+    function renderDataTable(contentDiv, data, dataSource, viewConfig) {
+        let html = '';
+
+        if (dataSource === 'route') {
+            // Use existing route table renderer
+            renderRouteTable(viewConfig.id, data, data.routeId);
+            return;
+        }
+
+        if (dataSource === '/api/vehicles/current') {
+            html = `<table class="custom-view-table"><thead><tr>
+                <th>Route</th><th>Vehicle ID</th><th>Delay</th><th>Status</th><th>Location</th>
+            </tr></thead><tbody>`;
+            data.forEach(v => {
+                const delayMin = v.delay_minutes ? v.delay_minutes.toFixed(1) : '0.0';
+                const delayColor = Math.abs(v.delay_seconds) <= 180 ? '#10b981' :
+                                   v.delay_seconds <= 600 ? '#f59e0b' : '#ef4444';
+                html += `<tr>
+                    <td><strong>${v.route_id}</strong></td>
+                    <td>${v.vehicle_id}</td>
+                    <td style="color: ${delayColor}; font-weight: 600;">${delayMin} min</td>
+                    <td>${v.delay_category ? v.delay_category.replace('_', ' ') : 'Unknown'}</td>
+                    <td>${v.latitude ? v.latitude.toFixed(4) + ', ' + v.longitude.toFixed(4) : 'N/A'}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        } else if (dataSource === '/api/delays/summary') {
+            html = `<table class="custom-view-table"><thead><tr>
+                <th>Category</th><th>Count</th><th>Percentage</th>
+            </tr></thead><tbody>`;
+            const total = data.total_vehicles;
+            html += `<tr><td>On Time</td><td style="color: #10b981; font-weight: 600;">${data.on_time}</td><td>${((data.on_time/total)*100).toFixed(1)}%</td></tr>`;
+            html += `<tr><td>Minor Delay</td><td style="color: #f59e0b; font-weight: 600;">${data.minor_delay}</td><td>${((data.minor_delay/total)*100).toFixed(1)}%</td></tr>`;
+            html += `<tr><td>Major Delay</td><td style="color: #ef4444; font-weight: 600;">${data.major_delay}</td><td>${((data.major_delay/total)*100).toFixed(1)}%</td></tr>`;
+            html += `<tr><td><strong>Total</strong></td><td><strong>${total}</strong></td><td>100%</td></tr>`;
+            html += `</tbody></table>`;
+        } else if (dataSource === '/api/delays/top-routes') {
+            html = `<table class="custom-view-table"><thead><tr>
+                <th>Route</th><th>Avg Delay</th><th>Data Points</th>
+            </tr></thead><tbody>`;
+            data.forEach(r => {
+                html += `<tr>
+                    <td><strong>Route ${r.route_id}</strong></td>
+                    <td style="color: #ef4444; font-weight: 600;">${r.avg_delay_minutes} min</td>
+                    <td>${r.incident_count}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        } else if (dataSource === '/api/delays/patterns') {
+            html = `<table class="custom-view-table"><thead><tr>
+                <th>Route</th><th>Hour</th><th>Avg Delay</th><th>Frequency</th>
+            </tr></thead><tbody>`;
+            data.forEach(p => {
+                html += `<tr>
+                    <td><strong>Route ${p.route_id}</strong></td>
+                    <td>${p.hour}:00</td>
+                    <td style="color: #ef4444; font-weight: 600;">${p.avg_delay_minutes} min</td>
+                    <td>${p.frequency}x</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        } else if (dataSource === '/api/predictions') {
+            html = `<table class="custom-view-table"><thead><tr>
+                <th>Route</th><th>Vehicle</th><th>Current</th><th>Predicted</th><th>Confidence</th>
+            </tr></thead><tbody>`;
+            data.forEach(p => {
+                html += `<tr>
+                    <td><strong>Route ${p.route_id}</strong></td>
+                    <td>${p.vehicle_id}</td>
+                    <td style="color: #f59e0b;">${p.current_delay_min} min</td>
+                    <td style="color: #ef4444; font-weight: 600;">${p.predicted_delay_min} min</td>
+                    <td>${p.confidence}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        } else if (dataSource === '/api/alerts/active') {
+            html = `<table class="custom-view-table"><thead><tr>
+                <th>Route</th><th>Message</th><th>Delay</th><th>Action</th>
+            </tr></thead><tbody>`;
+            data.forEach(a => {
+                html += `<tr>
+                    <td><strong>Route ${a.route_id}</strong></td>
+                    <td>${a.message}</td>
+                    <td style="color: #ef4444; font-weight: 600;">${a.delay_minutes} min</td>
+                    <td style="font-size: 12px;">${a.action}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+
+        contentDiv.innerHTML = html || '<div class="empty-state">No data available</div>';
+    }
+
+    function renderBarChart(contentDiv, data, dataSource, viewConfig) {
+        const canvasId = viewConfig.id + '_chart';
+        contentDiv.innerHTML = `<canvas id="${canvasId}" class="chart-canvas"></canvas>`;
+
+        let chartData = {labels: [], datasets: []};
+
+        if (dataSource === 'route') {
+            // Route: Show delay distribution per vehicle
+            chartData.labels = data.vehicles.map(v => v.vehicle_id);
+            chartData.datasets = [{
+                label: 'Delay (minutes)',
+                data: data.vehicles.map(v => v.delay_minutes || 0),
+                backgroundColor: data.vehicles.map(v => {
+                    const delay = v.delay_seconds || 0;
+                    return Math.abs(delay) <= 180 ? '#10b981' : delay <= 600 ? '#f59e0b' : '#ef4444';
+                })
+            }];
+        } else if (dataSource === '/api/vehicles/current') {
+            // Vehicles: Count by route
+            const routeCounts = {};
+            data.forEach(v => {
+                routeCounts[v.route_id] = (routeCounts[v.route_id] || 0) + 1;
+            });
+            chartData.labels = Object.keys(routeCounts).sort();
+            chartData.datasets = [{
+                label: 'Vehicle Count',
+                data: chartData.labels.map(r => routeCounts[r]),
+                backgroundColor: '#3b82f6'
+            }];
+        } else if (dataSource === '/api/delays/summary') {
+            chartData.labels = ['On Time', 'Minor Delay', 'Major Delay'];
+            chartData.datasets = [{
+                label: 'Vehicles',
+                data: [data.on_time, data.minor_delay, data.major_delay],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+            }];
+        } else if (dataSource === '/api/delays/top-routes') {
+            chartData.labels = data.map(r => 'Route ' + r.route_id);
+            chartData.datasets = [{
+                label: 'Avg Delay (min)',
+                data: data.map(r => r.avg_delay_minutes),
+                backgroundColor: '#ef4444'
+            }];
+        } else if (dataSource === '/api/delays/patterns') {
+            // Group by hour
+            const hourlyData = {};
+            data.forEach(p => {
+                hourlyData[p.hour] = (hourlyData[p.hour] || 0) + p.avg_delay_minutes;
+            });
+            chartData.labels = Object.keys(hourlyData).sort((a, b) => a - b).map(h => h + ':00');
+            chartData.datasets = [{
+                label: 'Avg Delay (min)',
+                data: Object.keys(hourlyData).sort((a, b) => a - b).map(h => hourlyData[h]),
+                backgroundColor: '#ef4444'
+            }];
+        } else if (dataSource === '/api/predictions') {
+            chartData.labels = ['Current', 'Predicted'];
+            const avgCurrent = data.reduce((sum, p) => sum + p.current_delay_min, 0) / data.length;
+            const avgPredicted = data.reduce((sum, p) => sum + p.predicted_delay_min, 0) / data.length;
+            chartData.datasets = [{
+                label: 'Avg Delay (min)',
+                data: [avgCurrent, avgPredicted],
+                backgroundColor: ['#f59e0b', '#ef4444']
+            }];
+        } else if (dataSource === '/api/alerts/active') {
+            // Alerts by route
+            const routeCounts = {};
+            data.forEach(a => {
+                routeCounts[a.route_id] = (routeCounts[a.route_id] || 0) + 1;
+            });
+            chartData.labels = Object.keys(routeCounts).map(r => 'Route ' + r);
+            chartData.datasets = [{
+                label: 'Alert Count',
+                data: Object.values(routeCounts),
+                backgroundColor: '#dc2626'
+            }];
+        }
+
+        new Chart(document.getElementById(canvasId), {
+            type: 'bar',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {display: false},
+                    title: {display: false}
+                },
+                scales: {
+                    y: {beginAtZero: true, ticks: {color: '#9ca3af'}, grid: {color: '#333333'}},
+                    x: {ticks: {color: '#9ca3af'}, grid: {color: '#333333'}}
+                }
+            }
+        });
+    }
+
+    function renderLineChart(contentDiv, data, dataSource, viewConfig) {
+        const canvasId = viewConfig.id + '_chart';
+        contentDiv.innerHTML = `<canvas id="${canvasId}" class="chart-canvas"></canvas>`;
+
+        // Line chart only for patterns (delay over hours)
+        const hourlyData = {};
+        data.forEach(p => {
+            if (!hourlyData[p.hour]) hourlyData[p.hour] = [];
+            hourlyData[p.hour].push(p.avg_delay_minutes);
+        });
+
+        const labels = Object.keys(hourlyData).sort((a, b) => a - b).map(h => h + ':00');
+        const avgDelays = Object.keys(hourlyData).sort((a, b) => a - b).map(h => {
+            const delays = hourlyData[h];
+            return delays.reduce((sum, d) => sum + d, 0) / delays.length;
+        });
+
+        new Chart(document.getElementById(canvasId), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Avg Delay (min)',
+                    data: avgDelays,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {display: false}
+                },
+                scales: {
+                    y: {beginAtZero: true, ticks: {color: '#9ca3af'}, grid: {color: '#333333'}},
+                    x: {ticks: {color: '#9ca3af'}, grid: {color: '#333333'}}
+                }
+            }
+        });
+    }
+
+    function renderPieChart(contentDiv, data, dataSource, viewConfig) {
+        const canvasId = viewConfig.id + '_chart';
+        contentDiv.innerHTML = `<canvas id="${canvasId}" class="chart-canvas"></canvas>`;
+
+        let chartData = {labels: [], datasets: []};
+
+        if (dataSource === 'route') {
+            // Route: Status distribution
+            chartData.labels = ['On Time', 'Minor Delay', 'Major Delay'];
+            chartData.datasets = [{
+                data: [data.stats.onTime,
+                       data.vehicles.filter(v => v.delay_seconds > 180 && v.delay_seconds <= 600).length,
+                       data.stats.delayed],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+            }];
+        } else if (dataSource === '/api/vehicles/current') {
+            // Calculate status distribution
+            const onTime = data.filter(v => Math.abs(v.delay_seconds) <= 180).length;
+            const minorDelay = data.filter(v => v.delay_seconds > 180 && v.delay_seconds <= 600).length;
+            const majorDelay = data.filter(v => v.delay_seconds > 600).length;
+            chartData.labels = ['On Time', 'Minor Delay', 'Major Delay'];
+            chartData.datasets = [{
+                data: [onTime, minorDelay, majorDelay],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+            }];
+        } else if (dataSource === '/api/delays/summary') {
+            chartData.labels = ['On Time', 'Minor Delay', 'Major Delay'];
+            chartData.datasets = [{
+                data: [data.on_time, data.minor_delay, data.major_delay],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+            }];
+        }
+
+        new Chart(document.getElementById(canvasId), {
+            type: 'pie',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {color: '#e8e8e8'}
+                    }
+                }
+            }
+        });
+    }
+
+    function renderStatCard(contentDiv, data, dataSource, viewConfig) {
+        let html = '<div class="stat-grid">';
+
+        if (dataSource === 'route') {
+            html += `
+                <div class="stat-box"><div class="stat-box-value">${data.stats.total}</div><div class="stat-box-label">Total Vehicles</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #10b981;">${data.stats.onTime}</div><div class="stat-box-label">On Time</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${data.stats.delayed}</div><div class="stat-box-label">Delayed</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #f59e0b;">${data.stats.avgDelay}</div><div class="stat-box-label">Avg Delay (min)</div></div>
+            `;
+        } else if (dataSource === '/api/vehicles/current') {
+            const onTime = data.filter(v => Math.abs(v.delay_seconds) <= 180).length;
+            const delayed = data.filter(v => v.delay_seconds > 180).length;
+            html += `
+                <div class="stat-box"><div class="stat-box-value">${data.length}</div><div class="stat-box-label">Total Vehicles</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #10b981;">${onTime}</div><div class="stat-box-label">On Time</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${delayed}</div><div class="stat-box-label">Delayed</div></div>
+                <div class="stat-box"><div class="stat-box-value">${Math.round((onTime/data.length)*100)}%</div><div class="stat-box-label">On-Time %</div></div>
+            `;
+        } else if (dataSource === '/api/delays/summary') {
+            html += `
+                <div class="stat-box"><div class="stat-box-value">${data.total_vehicles}</div><div class="stat-box-label">Total Vehicles</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #10b981;">${data.on_time}</div><div class="stat-box-label">On Time</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #f59e0b;">${data.minor_delay}</div><div class="stat-box-label">Minor Delay</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${data.major_delay}</div><div class="stat-box-label">Major Delay</div></div>
+            `;
+        } else if (dataSource === '/api/delays/top-routes') {
+            const avgDelay = data.reduce((sum, r) => sum + r.avg_delay_minutes, 0) / data.length;
+            html += `
+                <div class="stat-box"><div class="stat-box-value">${data.length}</div><div class="stat-box-label">Problem Routes</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${avgDelay.toFixed(1)}</div><div class="stat-box-label">Avg Delay (min)</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${Math.max(...data.map(r => r.avg_delay_minutes))}</div><div class="stat-box-label">Max Delay (min)</div></div>
+            `;
+        } else if (dataSource === '/api/delays/patterns') {
+            const avgDelay = data.reduce((sum, p) => sum + p.avg_delay_minutes, 0) / data.length;
+            const totalFreq = data.reduce((sum, p) => sum + p.frequency, 0);
+            html += `
+                <div class="stat-box"><div class="stat-box-value">${data.length}</div><div class="stat-box-label">Patterns Found</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${avgDelay.toFixed(1)}</div><div class="stat-box-label">Avg Delay (min)</div></div>
+                <div class="stat-box"><div class="stat-box-value">${totalFreq}</div><div class="stat-box-label">Total Occurrences</div></div>
+            `;
+        } else if (dataSource === '/api/predictions') {
+            const avgCurrent = data.reduce((sum, p) => sum + p.current_delay_min, 0) / data.length;
+            const avgPredicted = data.reduce((sum, p) => sum + p.predicted_delay_min, 0) / data.length;
+            html += `
+                <div class="stat-box"><div class="stat-box-value">${data.length}</div><div class="stat-box-label">Predictions</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #f59e0b;">${avgCurrent.toFixed(1)}</div><div class="stat-box-label">Avg Current (min)</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${avgPredicted.toFixed(1)}</div><div class="stat-box-label">Avg Predicted (min)</div></div>
+            `;
+        } else if (dataSource === '/api/alerts/active') {
+            const avgDelay = data.reduce((sum, a) => sum + a.delay_minutes, 0) / (data.length || 1);
+            html += `
+                <div class="stat-box"><div class="stat-box-value" style="color: #dc2626;">${data.length}</div><div class="stat-box-label">Active Alerts</div></div>
+                <div class="stat-box"><div class="stat-box-value" style="color: #ef4444;">${avgDelay.toFixed(1)}</div><div class="stat-box-label">Avg Delay (min)</div></div>
+            `;
+        }
+
+        html += '</div>';
+        contentDiv.innerHTML = html;
+    }
+
+    function renderMapView(contentDiv, data, dataSource, viewConfig) {
+        const mapId = viewConfig.id + '_map';
+        contentDiv.innerHTML = `<div id="${mapId}" style="height: 360px; width: 100%;"></div>`;
+
+        setTimeout(() => {
+            const customMap = L.map(mapId).setView([39.7392, -104.9903], 11);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap contributors, © CARTO',
+                maxZoom: 19
+            }).addTo(customMap);
+
+            let vehicles = [];
+            if (dataSource === 'route') {
+                vehicles = data.vehicles;
+            } else if (dataSource === '/api/vehicles/current') {
+                vehicles = data;
+            }
+
+            vehicles.forEach(v => {
+                if (v.latitude && v.longitude && v.latitude !== 0 && v.longitude !== 0) {
+                    const color = Math.abs(v.delay_seconds) <= 180 ? '#10b981' :
+                                  v.delay_seconds <= 600 ? '#f59e0b' : '#ef4444';
+                    const size = v.delay_seconds > 600 ? 14 : 10;
+
+                    const icon = L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [size, size]
+                    });
+
+                    L.marker([v.latitude, v.longitude], {icon: icon})
+                        .bindPopup(`<strong>Route ${v.route_id}</strong><br>Delay: ${v.delay_minutes ? v.delay_minutes.toFixed(1) : 0} min`)
+                        .addTo(customMap);
+                }
+            });
+        }, 100);
+    }
+
+    function refreshCustomView(viewId) {
+        // Find the view config from localStorage
+        const customViews = JSON.parse(localStorage.getItem('customViews') || '[]');
+        const viewConfig = customViews.find(v => v.id === viewId);
+
+        if (viewConfig) {
+            fetchCustomViewData(viewConfig);
+        }
+    }
+
+    function deleteCustomView(viewId) {
+        if (!confirm('Are you sure you want to delete this custom view?')) {
+            return;
+        }
+
+        // Clear the interval
+        if (customViewIntervals[viewId]) {
+            clearInterval(customViewIntervals[viewId]);
+            delete customViewIntervals[viewId];
+        }
+
+        // Remove from localStorage
+        let customViews = JSON.parse(localStorage.getItem('customViews') || '[]');
+        customViews = customViews.filter(v => v.id !== viewId);
+        localStorage.setItem('customViews', JSON.stringify(customViews));
+
+        // Remove from DOM
+        const panel = document.getElementById(viewId);
+        if (panel) {
+            panel.remove();
+        }
+    }
+
+    // Load existing custom views on page load
+    let customViewsLoaded = false;
+    function loadCustomViews() {
+        // Prevent duplicate loading
+        if (customViewsLoaded) return;
+        customViewsLoaded = true;
+
+        const customViews = JSON.parse(localStorage.getItem('customViews') || '[]');
+        customViews.forEach(viewConfig => {
+            // Check if view already exists in DOM
+            if (!document.getElementById(viewConfig.id)) {
+                renderCustomView(viewConfig);
+            }
+        });
+    }
+
+    // Load custom views when analytics page is opened
+    const originalSwitchPage = switchPage;
+    switchPage = function(pageName) {
+        originalSwitchPage.call(this, pageName);
+        if (pageName === 'analytics') {
+            // Small delay to ensure the page is rendered
+            setTimeout(loadCustomViews, 100);
+        }
+    };
+
+    console.log('Custom View Builder loaded. All visualization types (Table, Bar Chart, Line Chart, Pie Chart, Stat Card, Map) are fully functional.');
 </script>
+
+<!-- Methodology Modal -->
+<div id="methodologyModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Delay Prediction Methodology</h2>
+            <button class="modal-close" onclick="closeMethodologyModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Forecasts delays 20 minutes into the future using real-time GTFS data and historical patterns.</p>
+
+            <h3>How It Works</h3>
+            <p><strong>1. Delay Trend (last 30 min)</strong><br>
+            Analyzes if delays are worsening, stable, or improving</p>
+
+            <p><strong>2. Route Patterns (historical data)</strong><br>
+            Checks if this route typically has delays at this time of day</p>
+
+            <p><strong>3. Prediction Formula</strong><br>
+            <code>Future Delay = Current + Trend + Route Pattern</code></p>
+
+            <h3>Confidence Scores (50-95%)</h3>
+            <ul>
+                <li><strong>High (85-95%):</strong> Extensive data, consistent patterns</li>
+                <li><strong>Medium (60-80%):</strong> Moderate data availability</li>
+                <li><strong>Low (50-55%):</strong> Limited data or unpredictable behavior</li>
+            </ul>
+
+            <h3>Urgency Levels</h3>
+            <ul>
+                <li><strong>URGENT:</strong> 15+ min, rapidly worsening</li>
+                <li><strong>Severe:</strong> 12+ min or large increase</li>
+                <li><strong>Moderate:</strong> Monitor and prepare resources</li>
+                <li><strong>Improving:</strong> Delay decreasing</li>
+                <li><strong>Stable:</strong> Minor delays, standard monitoring</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Problem Routes Info Modal -->
+<div id="problemRoutesModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Understanding Problem Routes</h2>
+            <button class="modal-close" onclick="closeProblemRoutesModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Shows routes experiencing significant delays <strong>right now</strong> based on the last 1,000 delay records (~60-90 seconds of data).</p>
+
+            <h3>Metrics</h3>
+            <p><strong>Current Delay (e.g., "16 min delay (current)")</strong><br>
+            Average delay for this route in the last ~90 seconds. Only shows routes with delays > 3 minutes.</p>
+
+            <p><strong>Recent Data Points (e.g., "142 recent data points")</strong><br>
+            Number of delay records for this route in the last 1,000 system-wide records. Higher counts = more active vehicles.</p>
+
+            <p><strong>Last Updated</strong><br>
+            Shows when data was last refreshed (auto-updates every 30 seconds).</p>
+
+            <h3>Key Points</h3>
+            <ul>
+                <li><strong>Real-time snapshot:</strong> Last ~90 seconds, NOT historical averages</li>
+                <li><strong>For historical patterns:</strong> See "Delay Hotspots" panel</li>
+                <li><strong>Sorted by severity:</strong> Worst delays shown first</li>
+                <li><strong>Click any route:</strong> Jumps to map view</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Delay Hotspots Info Modal -->
+<div id="delayHotspotsModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Understanding Delay Hotspots</h2>
+            <button class="modal-close" onclick="closeDelayHotspotsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Identifies <strong>recurring delay patterns</strong> by analyzing the last 50,000 delay records (hours to days of historical data).</p>
+
+            <h3>How It Works</h3>
+            <p><strong>1. Groups by Route + Hour</strong><br>
+            Combines delays by route AND time of day (e.g., "Route 15 at 8:00")</p>
+
+            <p><strong>2. Calculates Averages</strong><br>
+            Finds typical delay for each route+hour pattern</p>
+
+            <p><strong>3. Filters & Ranks</strong><br>
+            Shows only patterns with avg delay > 3 min, sorted by severity</p>
+
+            <h3>Metrics</h3>
+            <p><strong>Route + Hour (e.g., "Route 15 at 17:00")</strong><br>
+            This route typically has delays at this time (24-hour format)</p>
+
+            <p><strong>Average Delay (e.g., "18 min avg")</strong><br>
+            Typical delay severity for this route at this hour</p>
+
+            <p><strong>Frequency (e.g., "(67x)")</strong><br>
+            Number of occurrences. Higher = more reliable pattern
+            <br>• 50+ = Very reliable
+            <br>• 20-50 = Moderate confidence
+            <br>• <20 = Possible pattern, limited data</p>
+
+            <h3>Use Cases</h3>
+            <p><strong>Example:</strong> "Route 15 at 17:00: 18 min avg (67x)"</p>
+            <ul>
+                <li>Route 15 consistently delayed at 5 PM</li>
+                <li>Schedule extra buses proactively</li>
+                <li>Pre-position backup resources</li>
+                <li>Warn passengers about typical delays</li>
+            </ul>
+
+            <h3>vs. Problem Routes</h3>
+            <p><strong>Delay Hotspots:</strong> Historical patterns (hours-days) for proactive planning<br>
+            <strong>Problem Routes:</strong> Real-time snapshot (~90 sec) for immediate response</p>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
