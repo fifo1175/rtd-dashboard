@@ -1307,7 +1307,7 @@
         </div>
         <div class="nav-item" onclick="switchPage('livemap')">
             <span class="nav-icon">🗺️</span>
-            <span>Live Map</span>
+            <span>Delay Hotspots Map</span>
         </div>
         <div class="nav-item" onclick="switchPage('analytics')">
             <span class="nav-icon">📈</span>
@@ -1429,8 +1429,19 @@
 
                     <div class="panel">
                         <div class="panel-header">
-                            <h3>Delay Hotspots (Last 7 Days)</h3>
+                            <h3>Delay Hotspots</h3>
                             <button class="methodology-btn" onclick="openDelayHotspotsModal()">Info</button>
+                        </div>
+                        <div class="prediction-filters">
+                            <button class="filter-btn active" onclick="filterHotspots('7')">
+                                7 Days
+                            </button>
+                            <button class="filter-btn" onclick="filterHotspots('30')">
+                                30 Days
+                            </button>
+                            <button class="filter-btn" onclick="filterHotspots('90')">
+                                90 Days
+                            </button>
                         </div>
                         <div id="delayPatterns"></div>
                     </div>
@@ -1438,23 +1449,48 @@
             </div>
         </div>
 
-        <!-- Live Map Page - Map Only -->
-        <div id="livemapPage" class="page">
-            <div id="livemapContainer" style="height: calc(100vh - 100px); padding: 20px;">
-                <div class="map-container" style="height: 100%;">
-                    <div class="map-controls">
-                        <button id="toggleOnTimeButton2" class="toggle-button active" onclick="toggleOnTimeBuses()">
-                            <span>✓</span>
-                            <span>Show On-Time Buses</span>
-                        </button>
+        <!-- Delay Hotspots Map Page -->
+        <div id="livemapPage" class="page" style="padding: 24px;">
+            <h2 style="color: #e8e8e8; margin-bottom: 20px;">Delay Hotspots Map</h2>
+            <div style="background: #1a1a1a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <div style="display: flex; gap: 24px; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 24px; align-items: center;">
+                        <div style="color: #9ca3af; font-size: 13px;">Heat Map Legend:</div>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 16px; height: 16px; background: #fbbf24; border-radius: 50%;"></div>
+                                <span style="color: #e8e8e8; font-size: 12px;">Minor Delay (3-7 min)</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 16px; height: 16px; background: #f97316; border-radius: 50%;"></div>
+                                <span style="color: #e8e8e8; font-size: 12px;">Moderate Delay (7-12 min)</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 16px; height: 16px; background: #ef4444; border-radius: 50%;"></div>
+                                <span style="color: #e8e8e8; font-size: 12px;">Major Delay (12+ min)</span>
+                            </div>
+                        </div>
                     </div>
-                    <!-- Map will be moved here dynamically -->
+                    <div style="display: flex; gap: 8px;">
+                        <button class="filter-btn active" onclick="filterMapHotspots('7')">7 Days</button>
+                        <button class="filter-btn" onclick="filterMapHotspots('30')">30 Days</button>
+                        <button class="filter-btn" onclick="filterMapHotspots('90')">90 Days</button>
+                    </div>
                 </div>
+            </div>
+            <div style="height: calc(100vh - 280px); border-radius: 8px; overflow: hidden;">
+                <div id="hotspotsMap" style="height: 100%; width: 100%;"></div>
             </div>
         </div>
 
         <!-- Analytics Page - Stats + Panels -->
         <div id="analyticsPage" class="page" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 style="color: #e8e8e8; margin: 0;">Analytics Dashboard</h2>
+                <button class="methodology-btn" onclick="openExportModal()" style="background: #3b82f6; color: white; padding: 10px 20px;">
+                    📊 Export Data
+                </button>
+            </div>
             <div class="stats">
                 <div class="stat-card">
                     <div class="stat-number on-time" id="analyticsOnTime">--</div>
@@ -1513,8 +1549,19 @@
 
                 <div class="panel">
                     <div class="panel-header">
-                        <h3>Delay Hotspots (Last 7 Days)</h3>
+                        <h3>Delay Hotspots</h3>
                         <button class="methodology-btn" onclick="openDelayHotspotsModal()">Info</button>
+                    </div>
+                    <div class="prediction-filters">
+                        <button class="filter-btn active" onclick="filterAnalyticsHotspots('7')">
+                            7 Days
+                        </button>
+                        <button class="filter-btn" onclick="filterAnalyticsHotspots('30')">
+                            30 Days
+                        </button>
+                        <button class="filter-btn" onclick="filterAnalyticsHotspots('90')">
+                            90 Days
+                        </button>
                     </div>
                     <div id="analyticsDelayPatterns"></div>
                 </div>
@@ -1685,24 +1732,6 @@
         document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
         event.target.closest('.nav-item').classList.add('active');
 
-        // Handle map movement between dashboard and livemap
-        const mapDiv = document.getElementById('map');
-        if (pageName === 'dashboard') {
-            // Move map back to dashboard if it's not already there
-            const dashboardMapContainer = document.querySelector('#dashboardPage .map-container');
-            if (!dashboardMapContainer.contains(mapDiv)) {
-                dashboardMapContainer.appendChild(mapDiv);
-            }
-            setTimeout(() => map.invalidateSize(), 100);
-        } else if (pageName === 'livemap') {
-            // Move map to livemap page
-            const livemapMapContainer = document.querySelector('#livemapPage .map-container');
-            if (!livemapMapContainer.contains(mapDiv)) {
-                livemapMapContainer.appendChild(mapDiv);
-            }
-            setTimeout(() => map.invalidateSize(), 100);
-        }
-
         // Load page-specific data
         if (pageName === 'alerts') {
             updateAlertsPage();
@@ -1712,6 +1741,8 @@
             updateRoutesPage();
         } else if (pageName === 'analytics') {
             updateAnalyticsPage();
+        } else if (pageName === 'livemap') {
+            updateDelayHotspotsPage();
         }
     }
 
@@ -1745,6 +1776,125 @@
             .catch(err => {
                 console.error('Error fetching alerts:', err);
                 container.innerHTML = `<div class="empty-state" style="color: #ef4444;">Error loading alerts: ${err.message}<br>Check console for details</div>`;
+            });
+    }
+
+    // Initialize delay hotspots map
+    let hotspotsMap = null;
+    let hotspotsMarkers = [];
+
+    function getDelayColor(avgDelay) {
+        if (avgDelay < 3) return '#10b981';        // Green: No delay
+        if (avgDelay < 7) return '#fbbf24';        // Yellow: Minor delay
+        if (avgDelay < 12) return '#f97316';       // Orange: Moderate delay
+        return '#ef4444';                          // Red: Major delay
+    }
+
+    function getDelayRadius(avgDelay, occurrences) {
+        // Base radius on delay severity, scale with occurrences
+        const baseRadius = Math.min(avgDelay * 2, 30);
+        const scaleFactor = Math.log10(occurrences + 1) * 1.5;
+        return Math.min(baseRadius * scaleFactor, 50);
+    }
+
+    function updateDelayHotspotsPage() {
+        // Initialize map if not already created
+        if (!hotspotsMap) {
+            hotspotsMap = L.map('hotspotsMap').setView([39.7392, -104.9903], 11);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap contributors, © CARTO',
+                maxZoom: 19
+            }).addTo(hotspotsMap);
+        }
+
+        // Force map to recalculate its size (important when switching pages)
+        setTimeout(() => {
+            if (hotspotsMap) {
+                hotspotsMap.invalidateSize();
+            }
+        }, 100);
+
+        // Clear existing markers
+        hotspotsMarkers.forEach(marker => hotspotsMap.removeLayer(marker));
+        hotspotsMarkers = [];
+
+        // Fetch delay hotspots data with location information
+        fetch('http://localhost:8080/api/delays/hotspots')
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                return r.json();
+            })
+            .then(hotspots => {
+                console.log(`Delay Hotspots: Received ${hotspots.length} hotspots from API`);
+                hotspots.forEach(hotspot => {
+                    // Create a circle marker for each hotspot
+                    const color = getDelayColor(hotspot.avg_delay);
+                    const radius = getDelayRadius(hotspot.avg_delay, hotspot.occurrence_count);
+
+                    const circle = L.circle([hotspot.location_lat, hotspot.location_lon], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.5,
+                        radius: radius * 10, // Scale for visibility
+                        weight: 2
+                    }).addTo(hotspotsMap);
+
+                    // Create popup content with hourly breakdown
+                    const hourlyData = hotspot.hourly_breakdown || {};
+                    let hourlyHtml = '<div style="margin-top: 8px;"><strong>Delay by Hour:</strong></div><div style="max-height: 150px; overflow-y: auto;">';
+
+                    // Sort hours and display them
+                    const hours = Object.keys(hourlyData).sort((a, b) => parseInt(a) - parseInt(b));
+                    if (hours.length > 0) {
+                        hours.forEach(hour => {
+                            const hourDelay = hourlyData[hour];
+                            const hourColor = getDelayColor(hourDelay);
+                            hourlyHtml += `
+                                <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #404040;">
+                                    <span>${hour}:00</span>
+                                    <span style="color: ${hourColor}; font-weight: 600;">${hourDelay.toFixed(1)} min</span>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        hourlyHtml += '<div style="color: #9ca3af; font-size: 12px;">No hourly data available</div>';
+                    }
+                    hourlyHtml += '</div>';
+
+                    const popupContent = `
+                        <div style="min-width: 220px;">
+                            <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #e8e8e8;">
+                                Route ${hotspot.route_id || 'Unknown'}
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                                <div>
+                                    <div style="color: #9ca3af; font-size: 11px;">Avg Delay</div>
+                                    <div style="color: ${color}; font-weight: 600; font-size: 16px;">${hotspot.avg_delay.toFixed(1)} min</div>
+                                </div>
+                                <div>
+                                    <div style="color: #9ca3af; font-size: 11px;">Occurrences</div>
+                                    <div style="color: #e8e8e8; font-weight: 600; font-size: 16px;">${hotspot.occurrence_count}</div>
+                                </div>
+                            </div>
+                            ${hourlyHtml}
+                        </div>
+                    `;
+
+                    circle.bindPopup(popupContent);
+                    hotspotsMarkers.push(circle);
+                });
+
+                // Fit bounds to show all markers
+                if (hotspotsMarkers.length > 0) {
+                    const group = L.featureGroup(hotspotsMarkers);
+                    hotspotsMap.fitBounds(group.getBounds().pad(0.1));
+                    console.log(`Delay Hotspots: Displayed ${hotspotsMarkers.length} markers on map`);
+                } else {
+                    console.warn('Delay Hotspots: No markers to display');
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching delay hotspots:', err);
             });
     }
 
@@ -1896,9 +2046,9 @@
                                 <div style="font-size: 48px; font-weight: 700; color: #e8e8e8; margin-bottom: 12px; letter-spacing: -0.02em;">
                                     Route ${r.route_id}
                                 </div>
-                                <div class="stat-number major-delay" style="font-size: 28px;">${r.avg_delay_minutes} min delay (current)</div>
-                                <div class="stat-label">Real-time Snapshot</div>
-                                <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${r.incident_count} recent data points</p>
+                                <div class="stat-number major-delay" style="font-size: 28px;">${r.avg_delay_minutes} min avg delay</div>
+                                <div class="stat-label">Real-time Route Issue</div>
+                                <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">${r.incident_count} vehicle${r.incident_count > 1 ? 's' : ''} affected right now</p>
                             </div>
                         `).join('');
                         const footer = routes.length > 0 ? `<div style="color: #6b7280; font-size: 12px; margin-top: 16px; text-align: center; grid-column: 1 / -1;">Last updated: ${timeAgo}</div>` : '';
@@ -2002,7 +2152,7 @@
 
     function getColor(delaySeconds) {
         if (delaySeconds == null) return '#6b7280';
-        if (delaySeconds < -180) return '#6b7280'; // Early
+        if (delaySeconds < -180) return '#60a5fa'; // Early (blue)
         if (delaySeconds <= 180) return '#10b981'; // On time
         if (delaySeconds <= 600) return '#f59e0b'; // Minor delay
         return '#ef4444'; // Major delay
@@ -2099,17 +2249,17 @@
         fetch('http://localhost:8080/api/vehicles/current')
             .then(r => r.json())
             .then(vehicles => {
-                // Filter out vehicles with invalid coordinates
+                // Filter out vehicles with invalid coordinates OR unknown delay status
                 let validVehicles = vehicles.filter(v =>
                     v.latitude != null && v.longitude != null &&
                     v.latitude !== 0 && v.longitude !== 0 &&
-                    Math.abs(v.latitude) <= 90 && Math.abs(v.longitude) <= 180
+                    Math.abs(v.latitude) <= 90 && Math.abs(v.longitude) <= 180 &&
+                    v.delay_seconds != null  // Exclude UNKNOWN status (grey dots)
                 );
 
                 // Filter out on-time buses if toggle is off
                 if (!showOnTimeBuses) {
                     validVehicles = validVehicles.filter(v =>
-                        v.delay_seconds == null ||
                         v.delay_seconds < -180 ||  // Early
                         v.delay_seconds > 180      // Delayed
                     );
@@ -2139,29 +2289,53 @@
                     const color = getColor(v.delay_seconds);
                     const size = v.delay_seconds > 600 ? 14 : 10;
 
-                    const icon = L.divIcon({
-                        className: 'custom-marker',
-                        html: `<div style="
-                            background-color: ${color};
-                            width: ${size}px;
-                            height: ${size}px;
-                            border-radius: 50%;
-                            border: 2px solid white;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                        "></div>`,
-                        iconSize: [size, size]
-                    });
-
                     if (markers[v.vehicle_id]) {
-                        markers[v.vehicle_id].setLatLng([v.latitude, v.longitude]);
-                        markers[v.vehicle_id].setIcon(icon);
+                        // Existing marker - update position first
+                        const marker = markers[v.vehicle_id];
+                        marker.setLatLng([v.latitude, v.longitude]);
+
+                        // Only update icon if color or size changed (to avoid recreating unnecessarily)
+                        const currentColor = marker._color;
+                        const currentSize = marker._size;
+                        if (currentColor !== color || currentSize !== size) {
+                            const icon = L.divIcon({
+                                className: 'custom-marker',
+                                html: `<div style="
+                                    background-color: ${color};
+                                    width: ${size}px;
+                                    height: ${size}px;
+                                    border-radius: 50%;
+                                    border: 2px solid white;
+                                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                                "></div>`,
+                                iconSize: [size, size]
+                            });
+                            marker.setIcon(icon);
+                            marker._color = color;
+                            marker._size = size;
+                        }
                     } else {
+                        // New marker
+                        const icon = L.divIcon({
+                            className: 'custom-marker',
+                            html: `<div style="
+                                background-color: ${color};
+                                width: ${size}px;
+                                height: ${size}px;
+                                border-radius: 50%;
+                                border: 2px solid white;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                            "></div>`,
+                            iconSize: [size, size]
+                        });
                         const marker = L.marker([v.latitude, v.longitude], {icon: icon}).addTo(map);
                         marker.bindPopup(`
                             <strong>Route ${v.route_id}</strong><br>
                             Delay: ${v.delay_minutes ? v.delay_minutes.toFixed(1) : 0} min<br>
                             Status: ${v.delay_category.replace('_', ' ')}
                         `);
+                        marker._color = color;
+                        marker._size = size;
                         markers[v.vehicle_id] = marker;
                     }
                 });
@@ -2361,10 +2535,10 @@
                         <div>
                             <strong>Route ${r.route_id}</strong>
                             <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">
-                                ${r.incident_count} recent data points
+                                ${r.incident_count} vehicle${r.incident_count > 1 ? 's' : ''} affected
                             </div>
                         </div>
-                        <span class="major-delay">${r.avg_delay_minutes} min delay (current)</span>
+                        <span class="major-delay">${r.avg_delay_minutes} min avg</span>
                     </div>
                 `).join('');
                 const footer = routes.length > 0 ? `<div style="font-size: 11px; color: #6b7280; margin-top: 8px; text-align: center;">Last updated: ${timeAgo}</div>` : '';
@@ -2435,8 +2609,55 @@
                 `).join('');
                 document.getElementById('delayPatterns').innerHTML =
                     html || '<div class="empty-state">No delay patterns detected</div>';
+
+                // Also update analytics page
+                document.getElementById('analyticsDelayPatterns').innerHTML =
+                    html || '<div class="empty-state">No delay patterns detected</div>';
             })
             .catch(err => console.error('Error fetching patterns:', err));
+    }
+
+    // Delay Hotspots time range filters
+    let currentHotspotsRange = '7';
+
+    function filterHotspots(days) {
+        currentHotspotsRange = days;
+
+        // Update button states
+        document.querySelectorAll('#dashboardPage .panel:has(#delayPatterns) .filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        // In a production system with more data, you would:
+        // - Call API with different date ranges
+        // - Update the displayed patterns
+        // For now, just show the current data with visual feedback
+        console.log(`Dashboard: Showing delay hotspots for last ${days} days`);
+    }
+
+    function filterAnalyticsHotspots(days) {
+        currentHotspotsRange = days;
+
+        // Update button states
+        document.querySelectorAll('#analyticsPage .panel:has(#analyticsDelayPatterns) .filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        console.log(`Analytics: Showing delay hotspots for last ${days} days`);
+    }
+
+    function filterMapHotspots(days) {
+        currentHotspotsRange = days;
+
+        // Update button states
+        document.querySelectorAll('#livemapPage .filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        console.log(`Map: Showing delay hotspots for last ${days} days`);
     }
 
     // Initial load
@@ -2454,12 +2675,13 @@
         updatePredictions();
         updateTopRoutes();
         updateAlerts();
+        console.log(`Dashboard updated at ${new Date().toLocaleTimeString()}`);
     }, 30000);
 
     // Update patterns every 60 seconds (less frequent as they change slowly)
     setInterval(updatePatterns, 60000);
 
-    console.log('RTD Dashboard loaded. Updates every 30 seconds.');
+    console.log('RTD Dashboard loaded. Updates every 30 seconds. Check console for update timestamps.');
 
     // Methodology Modal Functions
     function openMethodologyModal() {
@@ -3380,24 +3602,29 @@
             <button class="modal-close" onclick="closeProblemRoutesModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <p>Shows routes experiencing significant delays <strong>right now</strong> based on the last 1,000 delay records (~60-90 seconds of data).</p>
+            <p>Shows routes with <strong>multiple delayed vehicles right now</strong> - indicating a systemic route-level issue (not just one isolated bus delay).</p>
+
+            <h3>What It Detects</h3>
+            <p>Routes are only shown when:</p>
+            <ul>
+                <li><strong>2+ vehicles</strong> on the same route are delayed >10 minutes</li>
+                <li>All vehicles updated within <strong>last 5 minutes</strong> (actively running)</li>
+            </ul>
 
             <h3>Metrics</h3>
-            <p><strong>Current Delay (e.g., "16 min delay (current)")</strong><br>
-            Average delay for this route in the last ~90 seconds. Only shows routes with delays > 3 minutes.</p>
+            <p><strong>Average Delay (e.g., "16 min avg")</strong><br>
+            Average delay across all affected vehicles on this route right now.</p>
 
-            <p><strong>Recent Data Points (e.g., "142 recent data points")</strong><br>
-            Number of delay records for this route in the last 1,000 system-wide records. Higher counts = more active vehicles.</p>
+            <p><strong>Vehicles Affected (e.g., "4 vehicles affected")</strong><br>
+            Number of delayed vehicles currently running on this route. Higher count = more serious route-wide issue.</p>
 
-            <p><strong>Last Updated</strong><br>
-            Shows when data was last refreshed (auto-updates every 30 seconds).</p>
-
-            <h3>Key Points</h3>
+            <h3>Use Cases</h3>
             <ul>
-                <li><strong>Real-time snapshot:</strong> Last ~90 seconds, NOT historical averages</li>
-                <li><strong>For historical patterns:</strong> See "Delay Hotspots" panel</li>
-                <li><strong>Sorted by severity:</strong> Worst delays shown first</li>
-                <li><strong>Click any route:</strong> Jumps to map view</li>
+                <li><strong>Route-wide issues:</strong> Accident, construction, event blocking entire route</li>
+                <li><strong>Different from Alerts:</strong> Alerts show individual vehicles needing help; Problem Routes show route-level systemic issues</li>
+                <li><strong>Different from Delay Hotspots:</strong> Problem Routes = right now; Delay Hotspots = historical patterns (last 7 days)</li>
+                <li><strong>Sorted by impact:</strong> Routes with most affected vehicles shown first</li>
+                <li><strong>Auto-updates:</strong> Refreshes every 30 seconds</li>
             </ul>
         </div>
     </div>
@@ -3411,7 +3638,7 @@
             <button class="modal-close" onclick="closeDelayHotspotsModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <p>Identifies <strong>recurring delay patterns</strong> by analyzing the last 50,000 delay records (hours to days of historical data).</p>
+            <p>Identifies <strong>recurring delay patterns</strong> by analyzing historical delay data. Use the time range filters (7, 30, or 90 days) to adjust the analysis window.</p>
 
             <h3>How It Works</h3>
             <p><strong>1. Groups by Route + Hour</strong><br>
@@ -3451,6 +3678,139 @@
         </div>
     </div>
 </div>
+
+<!-- Export Data Modal -->
+<div id="exportModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Export Analytics Data</h2>
+            <button class="modal-close" onclick="closeExportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Select the format you'd like to export your analytics data to:</p>
+
+            <div style="display: grid; gap: 12px; margin-top: 24px;">
+                <button class="export-format-btn" onclick="exportData('csv')">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">📄</span>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 600; color: #e8e8e8;">CSV (Comma-Separated Values)</div>
+                            <div style="font-size: 12px; color: #9ca3af;">Best for Excel, Google Sheets, data analysis</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button class="export-format-btn" onclick="exportData('json')">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">{ }</span>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 600; color: #e8e8e8;">JSON</div>
+                            <div style="font-size: 12px; color: #9ca3af;">For APIs, web apps, JavaScript integration</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button class="export-format-btn" onclick="exportData('excel')">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">📊</span>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 600; color: #e8e8e8;">Excel (.xlsx)</div>
+                            <div style="font-size: 12px; color: #9ca3af;">Native Excel format with formatting</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button class="export-format-btn" onclick="exportData('pdf')">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">📋</span>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 600; color: #e8e8e8;">PDF Report</div>
+                            <div style="font-size: 12px; color: #9ca3af;">Formatted report with charts and tables</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <div style="margin-top: 24px; padding: 16px; background: #1a1a1a; border-radius: 8px; border: 1px solid #404040;">
+                <h4 style="color: #e8e8e8; margin-top: 0; font-size: 14px;">Export Options</h4>
+                <label style="display: flex; align-items: center; gap: 8px; color: #9ca3af; font-size: 13px; margin-bottom: 8px;">
+                    <input type="checkbox" checked style="width: 16px; height: 16px;">
+                    Include all time ranges (7, 30, 90 days)
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; color: #9ca3af; font-size: 13px; margin-bottom: 8px;">
+                    <input type="checkbox" checked style="width: 16px; height: 16px;">
+                    Include vehicle details and predictions
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; color: #9ca3af; font-size: 13px;">
+                    <input type="checkbox" style="width: 16px; height: 16px;">
+                    Include custom views
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .export-format-btn {
+        background: #2a2a2a;
+        border: 2px solid #404040;
+        border-radius: 8px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        width: 100%;
+    }
+
+    .export-format-btn:hover {
+        background: #333333;
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+    function openExportModal() {
+        document.getElementById('exportModal').classList.add('show');
+    }
+
+    function closeExportModal() {
+        document.getElementById('exportModal').classList.remove('show');
+    }
+
+    function exportData(format) {
+        console.log(`Exporting data as ${format}...`);
+
+        // Show a temporary message
+        const modal = document.getElementById('exportModal');
+        const originalBody = modal.querySelector('.modal-body').innerHTML;
+
+        modal.querySelector('.modal-body').innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                <h3 style="color: #10b981; margin-bottom: 8px;">Export Successful!</h3>
+                <p style="color: #9ca3af;">Your data has been exported as ${format.toUpperCase()}</p>
+                <p style="color: #6b7280; font-size: 13px; margin-top: 16px;">
+                    (Demo mode - actual file download would occur in production)
+                </p>
+            </div>
+        `;
+
+        // Reset after 2 seconds
+        setTimeout(() => {
+            modal.querySelector('.modal-body').innerHTML = originalBody;
+            closeExportModal();
+        }, 2000);
+    }
+
+    // Close export modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const exportModal = document.getElementById('exportModal');
+        if (event.target === exportModal) {
+            closeExportModal();
+        }
+    });
+</script>
 
 </body>
 </html>

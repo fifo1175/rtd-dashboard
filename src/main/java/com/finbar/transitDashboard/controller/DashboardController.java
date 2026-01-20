@@ -27,7 +27,12 @@ public class DashboardController {
     public List<Map<String, Object>> getCurrentVehicles() {
         List<VehicleStatus> vehicles = vehicleRepo.findAll();
 
-        return vehicles.stream().map(v -> {
+        // Only return vehicles that were updated in the last 5 minutes (actively running)
+        LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);
+
+        return vehicles.stream()
+                .filter(v -> v.getLastUpdated() != null && v.getLastUpdated().isAfter(fiveMinutesAgo))
+                .map(v -> {
             Map<String, Object> map = new HashMap<>();
             map.put("vehicle_id", v.getVehicleId());
             map.put("route_id", v.getRouteId());
@@ -45,15 +50,22 @@ public class DashboardController {
     public Map<String, Object> getDelaySummary() {
         List<VehicleStatus> all = vehicleRepo.findAll();
 
-        long total = all.size();
-        long onTime = all.stream().filter(v ->
-                v.getDelaySeconds() != null && Math.abs(v.getDelaySeconds()) <= 180).count();
-        long minorDelay = all.stream().filter(v ->
-                v.getDelaySeconds() != null && v.getDelaySeconds() > 180 && v.getDelaySeconds() <= 600).count();
-        long majorDelay = all.stream().filter(v ->
-                v.getDelaySeconds() != null && v.getDelaySeconds() > 600).count();
-        long early = all.stream().filter(v ->
-                v.getDelaySeconds() != null && v.getDelaySeconds() < -180).count();
+        // Only count vehicles that were updated in the last 5 minutes (actively running)
+        LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);
+        List<VehicleStatus> activeVehicles = all.stream()
+                .filter(v -> v.getLastUpdated() != null && v.getLastUpdated().isAfter(fiveMinutesAgo))
+                .filter(v -> v.getDelaySeconds() != null) // Exclude UNKNOWN status
+                .toList();
+
+        long total = activeVehicles.size();
+        long onTime = activeVehicles.stream().filter(v ->
+                Math.abs(v.getDelaySeconds()) <= 180).count();
+        long minorDelay = activeVehicles.stream().filter(v ->
+                v.getDelaySeconds() > 180 && v.getDelaySeconds() <= 600).count();
+        long majorDelay = activeVehicles.stream().filter(v ->
+                v.getDelaySeconds() > 600).count();
+        long early = activeVehicles.stream().filter(v ->
+                v.getDelaySeconds() < -180).count();
 
         Map<String, Object> summary = new HashMap<>();
         summary.put("total_vehicles", total);
@@ -326,39 +338,50 @@ public class DashboardController {
         return "Monitor situation - no immediate action required";
     }
 
-    // Endpoint 6: Get top problem routes
+    // Endpoint 6: Get top problem routes (real-time route-level aggregation)
+    // Shows routes with multiple delayed vehicles RIGHT NOW (not historical)
     @GetMapping("/delays/top-routes")
     public List<Map<String, Object>> getTopProblemRoutes() {
-        List<DelayHistory> recent = delayHistoryRepo
-                .findTop1000ByOrderByRecordedAtDesc();
+        List<VehicleStatus> all = vehicleRepo.findAll();
 
-        // Group by route and calculate average delay
-        Map<String, List<Integer>> routeDelays = new HashMap<>();
-        for (DelayHistory h : recent) {
-            routeDelays.computeIfAbsent(h.getRouteId(), k -> new ArrayList<>())
-                    .add(h.getDelaySeconds());
+        // Only consider vehicles that were updated in the last 5 minutes (actively running)
+        LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);
+        List<VehicleStatus> activeVehicles = all.stream()
+                .filter(v -> v.getLastUpdated() != null && v.getLastUpdated().isAfter(fiveMinutesAgo))
+                .filter(v -> v.getDelaySeconds() != null && v.getDelaySeconds() > 600) // Delayed vehicles (>10 min)
+                .toList();
+
+        // Group by route and calculate statistics
+        Map<String, List<VehicleStatus>> routeVehicles = new HashMap<>();
+        for (VehicleStatus v : activeVehicles) {
+            routeVehicles.computeIfAbsent(v.getRouteId(), k -> new ArrayList<>()).add(v);
         }
 
         List<Map<String, Object>> topRoutes = new ArrayList<>();
-        for (Map.Entry<String, List<Integer>> entry : routeDelays.entrySet()) {
-            double avgDelay = entry.getValue().stream()
-                    .mapToInt(Integer::intValue)
-                    .average()
-                    .orElse(0);
+        for (Map.Entry<String, List<VehicleStatus>> entry : routeVehicles.entrySet()) {
+            List<VehicleStatus> vehicles = entry.getValue();
 
-            if (avgDelay > 180) { // Only routes with avg delay > 3 min
+            // Only show routes with 2+ delayed vehicles (indicates systemic issue)
+            if (vehicles.size() >= 2) {
+                double avgDelay = vehicles.stream()
+                        .mapToInt(VehicleStatus::getDelaySeconds)
+                        .average()
+                        .orElse(0);
+
                 Map<String, Object> route = new HashMap<>();
                 route.put("route_id", entry.getKey());
                 route.put("avg_delay_minutes", Math.round(avgDelay / 60.0));
-                route.put("incident_count", entry.getValue().size());
+                route.put("incident_count", vehicles.size()); // Number of delayed vehicles on this route
                 topRoutes.add(route);
             }
         }
 
-        // Sort by average delay
-        topRoutes.sort((a, b) ->
-                ((Long)b.get("avg_delay_minutes")).compareTo((Long)a.get("avg_delay_minutes"))
-        );
+        // Sort by number of affected vehicles (descending), then by average delay
+        topRoutes.sort((a, b) -> {
+            int countCompare = ((Integer)b.get("incident_count")).compareTo((Integer)a.get("incident_count"));
+            if (countCompare != 0) return countCompare;
+            return ((Long)b.get("avg_delay_minutes")).compareTo((Long)a.get("avg_delay_minutes"));
+        });
 
         return topRoutes.stream().limit(10).collect(Collectors.toList());
     }
@@ -406,6 +429,110 @@ public class DashboardController {
         return result;
     }
 
+    @GetMapping("/delays/hotspots")
+    public List<Map<String, Object>> getDelayHotspots() {
+        // Denver metro area bounds to filter out bad data
+        final double MIN_LAT = 39.5;
+        final double MAX_LAT = 40.2;
+        final double MIN_LON = -105.3;
+        final double MAX_LON = -104.5;
+
+        // Get all delay history records to ensure full hourly coverage
+        // In production with millions of records, this would be replaced with a time-based query
+        List<DelayHistory> recentHistory = delayHistoryRepo.findAll();
+
+        // Get current vehicle positions to map routes to locations
+        List<VehicleStatus> currentVehicles = vehicleRepo.findAll();
+
+        // Create a map of route -> average location (only for vehicles within Denver metro)
+        Map<String, double[]> routeLocations = new HashMap<>();
+        Map<String, Integer> routeLocationCounts = new HashMap<>();
+
+        for (VehicleStatus v : currentVehicles) {
+            if (v.getRouteId() != null && v.getLatitude() != null && v.getLongitude() != null) {
+                // Filter out vehicles outside Denver metro area
+                if (v.getLatitude() >= MIN_LAT && v.getLatitude() <= MAX_LAT &&
+                    v.getLongitude() >= MIN_LON && v.getLongitude() <= MAX_LON) {
+                    String route = v.getRouteId();
+                    double[] loc = routeLocations.getOrDefault(route, new double[]{0.0, 0.0});
+                    loc[0] += v.getLatitude();
+                    loc[1] += v.getLongitude();
+                    routeLocations.put(route, loc);
+                    routeLocationCounts.put(route, routeLocationCounts.getOrDefault(route, 0) + 1);
+                }
+            }
+        }
+
+        // Calculate average locations for each route
+        for (String route : routeLocations.keySet()) {
+            double[] loc = routeLocations.get(route);
+            int count = routeLocationCounts.get(route);
+            loc[0] /= count;
+            loc[1] /= count;
+        }
+
+        // Group delays by route and hour
+        Map<String, Map<Integer, List<Integer>>> routeHourDelays = new HashMap<>();
+
+        for (DelayHistory h : recentHistory) {
+            String route = h.getRouteId();
+            if (route != null && h.getDelaySeconds() != null && h.getDelaySeconds() > 180) {
+                int hour = h.getRecordedAt().getHour();
+                routeHourDelays.computeIfAbsent(route, k -> new HashMap<>())
+                               .computeIfAbsent(hour, k -> new ArrayList<>())
+                               .add(h.getDelaySeconds());
+            }
+        }
+
+        // Build result with location data
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (String route : routeHourDelays.keySet()) {
+            // Skip routes without location data
+            if (!routeLocations.containsKey(route)) continue;
+
+            double[] loc = routeLocations.get(route);
+
+            // Filter out routes with locations outside Denver metro bounds
+            if (loc[0] < MIN_LAT || loc[0] > MAX_LAT || loc[1] < MIN_LON || loc[1] > MAX_LON) {
+                continue;
+            }
+
+            Map<Integer, List<Integer>> hourDelays = routeHourDelays.get(route);
+
+            // Calculate overall average and hourly breakdown
+            List<Integer> allDelays = new ArrayList<>();
+            Map<String, Double> hourlyBreakdown = new HashMap<>();
+
+            for (Integer hour : hourDelays.keySet()) {
+                List<Integer> delays = hourDelays.get(hour);
+                allDelays.addAll(delays);
+                double avgHourDelay = delays.stream().mapToInt(Integer::intValue).average().orElse(0);
+                hourlyBreakdown.put(String.valueOf(hour), Math.round(avgHourDelay / 60.0 * 10) / 10.0);
+            }
+
+            double avgDelay = allDelays.stream().mapToInt(Integer::intValue).average().orElse(0);
+
+            if (avgDelay > 180) { // Only include if avg > 3 min
+                Map<String, Object> hotspot = new HashMap<>();
+                hotspot.put("route_id", route);
+                hotspot.put("location_lat", loc[0]);
+                hotspot.put("location_lon", loc[1]);
+                hotspot.put("avg_delay", Math.round(avgDelay / 60.0 * 10) / 10.0);
+                hotspot.put("occurrence_count", allDelays.size());
+                hotspot.put("hourly_breakdown", hourlyBreakdown);
+                result.add(hotspot);
+            }
+        }
+
+        // Sort by average delay
+        result.sort((a, b) ->
+            Double.compare((Double)b.get("avg_delay"), (Double)a.get("avg_delay"))
+        );
+
+        return result;
+    }
+
     @PostMapping("/admin/cleanup-corrupted-data")
     public Map<String, Object> cleanupCorruptedData() {
         // Delete vehicles with unrealistic delays (outside -2 hours to +2 hours)
@@ -434,26 +561,26 @@ public class DashboardController {
     @GetMapping("/alerts/active")
     public List<Map<String, Object>> getActiveAlerts() {
         List<VehicleStatus> all = vehicleRepo.findAll();
+
+        // Only consider vehicles that were updated in the last 5 minutes (actively running)
+        LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);
+        List<VehicleStatus> activeVehicles = all.stream()
+                .filter(v -> v.getLastUpdated() != null && v.getLastUpdated().isAfter(fiveMinutesAgo))
+                .filter(v -> v.getDelaySeconds() != null && v.getDelaySeconds() > 600) // Major delay (10+ min)
+                .toList();
+
         List<Map<String, Object>> alerts = new ArrayList<>();
 
-        for (VehicleStatus v : all) {
-            // Filter: Only delays between 10 min and 2 hours (7200 sec) are realistic
-            if (v.getDelaySeconds() != null &&
-                v.getDelaySeconds() > 600 &&
-                v.getDelaySeconds() < 7200) {
-
-                long delayMinutes = Math.round(v.getDelaySeconds() / 60.0);
-                Map<String, Object> alert = new HashMap<>();
-                alert.put("route_id", v.getRouteId());
-                alert.put("delay_minutes", delayMinutes);
-                alert.put("severity", v.getDelaySeconds() > 900 ? "critical" : "warning");
-                alert.put("message", "Route " + v.getRouteId() + " is " + delayMinutes + " minutes delayed");
-                alert.put("action", "Consider deploying backup bus");
-                alerts.add(alert);
-
-                // Simulate sending alert (in production, this would be email/SMS)
-                System.out.println("⚠️ ALERT: " + alert.get("message"));
-            }
+        for (VehicleStatus v : activeVehicles) {
+            long delayMinutes = Math.round(v.getDelaySeconds() / 60.0);
+            Map<String, Object> alert = new HashMap<>();
+            alert.put("route_id", v.getRouteId());
+            alert.put("vehicle_id", v.getVehicleId());
+            alert.put("delay_minutes", delayMinutes);
+            alert.put("severity", v.getDelaySeconds() > 900 ? "critical" : "warning");
+            alert.put("message", "Route " + v.getRouteId() + " is " + delayMinutes + " minutes delayed");
+            alert.put("action", "Consider deploying backup bus");
+            alerts.add(alert);
         }
 
         return alerts;

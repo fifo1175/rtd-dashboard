@@ -18,6 +18,9 @@ public interface DelayHistoryRepository extends JpaRepository<DelayHistory, Long
     // For prediction algorithm - limit to 50K most recent records for performance
     List<DelayHistory> findTop50000ByOrderByRecordedAtDesc();
 
+    // For delay hotspots - get larger sample to cover full time range
+    List<DelayHistory> findTop300000ByOrderByRecordedAtDesc();
+
     List<DelayHistory> findByRecordedAtAfter(LocalDateTime localDateTime);
 
     // Data retention - delete records older than specified date

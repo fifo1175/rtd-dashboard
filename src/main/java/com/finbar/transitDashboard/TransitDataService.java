@@ -10,6 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,6 +49,10 @@ public class TransitDataService {
             int delayedCount = 0;
             int onTimeCount = 0;
             int earlyCount = 0;
+
+            // Build list of DelayHistory objects for batch save
+            List<DelayHistory> historyList = new ArrayList<>();
+            LocalDateTime now = LocalDateTime.now();
 
             for (FeedEntity entity : tripUpdateFeed.getEntityList()) {
                 if (!entity.hasTripUpdate()) continue;
@@ -95,21 +100,27 @@ public class TransitDataService {
                     System.out.println("✅ ON TIME: Route " + routeId + " → " + delay/60.0 + " minutes");
                 }
 
-                // Save to history
+                // Build delay history object for batch save
                 DelayHistory delayHistory = new DelayHistory();
                 delayHistory.setTripId(tripId);
                 delayHistory.setRouteId(routeId);
                 delayHistory.setDelaySeconds(delay);
                 delayHistory.setTimestamp(update.getTimestamp());
-                delayHistory.setRecordedAt(LocalDateTime.now());
-                delayHistoryRepo.save(delayHistory);
+                delayHistory.setRecordedAt(now);
+                historyList.add(delayHistory);
 
+            }
+
+            // Batch save all delay history records in a single transaction
+            if (!historyList.isEmpty()) {
+                delayHistoryRepo.saveAll(historyList);
             }
 
            System.out.println("\n========== SUMMARY ==========");
             System.out.println("✅ On Time: " + onTimeCount);
             System.out.println("🚨 Delayed (>3 min): " + delayedCount);
             System.out.println("🏃 Early (<-3 min): " + earlyCount);
+            System.out.println("Saved " + historyList.size() + " delay records in batch");
             System.out.println("=============================\n");
 
         } catch (Exception ex) {
@@ -200,13 +211,17 @@ public class TransitDataService {
     public void processVehiclePosition(byte[] data) throws Exception {
         System.out.println("VEHICLE POSITION MESSAGE RECEIVED");
         List<VehiclePosition> vehiclePositionList;
-        Thread.sleep(2000);
+        Thread.sleep(2000); // Wait for trip updates to process first
         try {
             FeedMessage vehicleStatusFeed = FeedMessage.parseFrom(data);
             vehiclePositionList = vehicleStatusFeed.getEntityList().stream()
                     .filter(FeedEntity::hasVehicle)
                     .map(FeedEntity::getVehicle)
                     .toList();
+
+            // Build list of VehicleStatus objects for batch save
+            List<VehicleStatus> statusList = new ArrayList<>();
+            LocalDateTime now = LocalDateTime.now();
 
             for (VehiclePosition vehicle: vehiclePositionList) {
                 if (!vehicle.hasVehicle() || !vehicle.hasTrip() || !vehicle.hasPosition()) {
@@ -221,17 +236,22 @@ public class TransitDataService {
                 status.setLongitude(vehicle.getPosition().getLongitude());
                 status.setStopId(vehicle.getStopId());
                 status.setTimestamp(vehicle.getTimestamp());
+                status.setLastUpdated(now); // Mark when this vehicle was last seen
 
                 Integer delay = tripDelays.get(vehicle.getTrip().getTripId());
                 status.setDelaySeconds(delay);
 
-                vehicleRepo.save(status);
+                statusList.add(status);
             }
 
-            Long repoSize = vehicleRepo.count();
-            System.out.println("------------------------------------------");
-            System.out.println("vehicle_status TABLE SIZE: " + repoSize);
-            System.out.println("------------------------------------------");
+            // Batch save all vehicles in a single transaction
+            if (!statusList.isEmpty()) {
+                vehicleRepo.saveAll(statusList);
+                System.out.println("------------------------------------------");
+                System.out.println("Saved " + statusList.size() + " vehicles in batch");
+                System.out.println("vehicle_status TABLE SIZE: " + vehicleRepo.count());
+                System.out.println("------------------------------------------");
+            }
 
         } catch (Exception ex) {
             System.err.println("Error processing vehicle position: " + ex.getMessage());

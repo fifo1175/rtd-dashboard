@@ -120,5 +120,12 @@ public class VehicleStatus {
         this.vehicleId = vehicleId;
     }
 
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
 
 }
