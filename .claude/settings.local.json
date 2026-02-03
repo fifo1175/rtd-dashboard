@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(mvn clean compile:*)",
+      "Bash(mvn compile:*)",
+      "Bash(pkill:*)",
+      "Bash(python3:*)",
+      "Bash(xargs:*)",
+      "Bash(cat:*)",
+      "Bash(if [ -f /tmp/manual_test.json ])",
+      "Bash(then head -c 500 /tmp/manual_test.json)",
+      "Bash(else echo \"File not found\")",
+      "Bash(fi)",
+      "Bash(time curl:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(sqlite3:*)",
+      "Bash(kill:*)"
+    ]
+  }
+}

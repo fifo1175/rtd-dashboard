@@ -104,7 +104,7 @@
 │  │  │  │  - Groups 7-day history by route + hour                     │  │  │  │
 │  │  │  │  - Identifies delay hotspots by time of day                 │  │  │  │
 │  │  │  │                                                              │  │  │  │
-│  │  │  │  GET /api/alerts/active                                     │  │  │  │
+│  │  │  │  GET /api    /alerts/active                                     │  │  │  │
 │  │  │  │  - Filters vehicles with delay > 10 min, < 2 hours         │  │  │  │
 │  │  │  └──────────────────────────────────────────────────────────────┘  │  │  │
 │  │  │                                                                     │  │  │
